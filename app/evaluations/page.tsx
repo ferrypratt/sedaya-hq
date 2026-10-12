@@ -339,7 +339,23 @@ export default function EvaluationsPage() {
               </div>
             )}
           </div>
-        ) : null}
+        ) : (
+          <div className="rounded-[28px] bg-paper-white border border-sand-border p-8 sm:p-12 text-center shadow-xs">
+            <Award className="w-12 h-12 text-ash-gray mx-auto mb-3" />
+            <h3 className="text-base font-bold text-ink-black mb-1">
+              Belum Ada Evaluasi Kinerja
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-gray max-w-md mx-auto mb-6">
+              Belum ada evaluasi kinerja untuk periode {periodType === 'weekly' ? 'mingguan' : 'bulanan'} ini. Klik tombol di bawah untuk membuat laporan evaluasi baru.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-pill-primary text-xs"
+            >
+              Buat Evaluasi Baru
+            </button>
+          </div>
+        )}
 
         {/* Modal: Catat Evaluasi Baru */}
         {isModalOpen && (

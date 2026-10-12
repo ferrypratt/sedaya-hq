@@ -177,8 +177,25 @@ export default function MarketingPlansPage() {
         </div>
 
         {/* Plans List */}
-        <div className="space-y-4">
-          {filteredPlans.map((plan) => {
+        {filteredPlans.length === 0 ? (
+          <div className="rounded-[28px] bg-paper-white border border-sand-border p-8 sm:p-12 text-center shadow-xs">
+            <Target className="w-12 h-12 text-ash-gray mx-auto mb-3" />
+            <h3 className="text-base font-bold text-ink-black mb-1">
+              Belum Ada Rencana Marketing
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-gray max-w-md mx-auto mb-6">
+              Belum ada rencana marketing aktif untuk periode ini. Klik tombol di bawah untuk menyusun target mingguan atau bulanan baru.
+            </p>
+            <button
+              onClick={() => setIsNewPlanOpen(true)}
+              className="btn-pill-primary text-xs"
+            >
+              Buat Rencana Baru
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredPlans.map((plan) => {
             const isExpanded = expandedPlanId === plan.id;
             const completedCount = plan.items.filter((i) => i.status === 'done').length;
             const progress = plan.items.length
@@ -369,6 +386,7 @@ export default function MarketingPlansPage() {
             );
           })}
         </div>
+      )}
 
         {/* Modal: Buat Rencana Baru */}
         {isNewPlanOpen && (

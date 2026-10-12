@@ -222,8 +222,25 @@ export default function SalesSupportPage() {
         </div>
 
         {/* Requests List */}
-        <div className="space-y-3.5">
-          {filteredRequests.map((req) => {
+        {filteredRequests.length === 0 ? (
+          <div className="rounded-[28px] bg-paper-white border border-sand-border p-8 sm:p-12 text-center shadow-xs">
+            <HelpCircle className="w-12 h-12 text-ash-gray mx-auto mb-3" />
+            <h3 className="text-base font-bold text-ink-black mb-1">
+              Belum Ada Permintaan Sales Support
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-gray max-w-md mx-auto mb-6">
+              Belum ada permintaan dukungan materi promosi dari tim sales/CRO. Klik tombol di bawah untuk mencatat permintaan baru.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-pill-primary text-xs"
+            >
+              Buat Permintaan Baru
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            {filteredRequests.map((req) => {
             const statusBadge = getStatusBadge(req.status);
 
             return (
@@ -319,6 +336,7 @@ export default function SalesSupportPage() {
             );
           })}
         </div>
+      )}
 
         {/* Modal Catat Permintaan */}
         {isModalOpen && (

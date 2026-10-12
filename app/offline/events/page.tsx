@@ -258,8 +258,25 @@ export default function OfflineEventsPage() {
         </div>
 
         {/* Events Cards List */}
-        <div className="space-y-4">
-          {filteredEvents.map((event) => {
+        {filteredEvents.length === 0 ? (
+          <div className="rounded-[28px] bg-paper-white border border-sand-border p-8 sm:p-12 text-center shadow-xs">
+            <Calendar className="w-12 h-12 text-ash-gray mx-auto mb-3" />
+            <h3 className="text-base font-bold text-ink-black mb-1">
+              Belum Ada Agenda Event Offline
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-gray max-w-md mx-auto mb-6">
+              Belum ada agenda pameran, expo, atau open booth yang tercatat. Klik tombol di bawah untuk menambahkan agenda baru.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-pill-primary text-xs"
+            >
+              Tambah Agenda Event
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredEvents.map((event) => {
             const statusBadge = getStatusBadge(event.status);
             const typeBadge = getTypeBadge(event.event_type);
 
@@ -386,6 +403,7 @@ export default function OfflineEventsPage() {
             );
           })}
         </div>
+      )}
 
         {/* Modal Tambah Event */}
         {isModalOpen && (

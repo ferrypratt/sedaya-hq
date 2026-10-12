@@ -327,7 +327,7 @@ export default function DashboardPage() {
                 </span>
               </div>
 
-              {activePlan && (
+              {activePlan ? (
                 <div>
                   <h3 className="font-bold text-sm text-ink-black">{activePlan.title}</h3>
                   <p className="text-xs text-stone-gray mt-1 leading-relaxed">
@@ -376,6 +376,12 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-stone-gray">
+                  <Target className="w-8 h-8 text-ash-gray mx-auto mb-2" />
+                  <p className="font-semibold text-ink-black">Belum ada rencana mingguan aktif</p>
+                  <p className="text-[11px] text-stone-400 mt-0.5">Buat rencana baru di menu Perencanaan</p>
+                </div>
               )}
             </div>
 
@@ -416,19 +422,23 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  {activitiesByFerry.map((act) => (
-                    <div
-                      key={act.id}
-                      className="p-2 rounded-xl bg-warm-cream/40 border border-sand-border text-xs flex items-center justify-between gap-2"
-                    >
-                      <span className="font-semibold text-ink-black truncate">{act.title}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
-                        {act.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {activitiesByFerry.length === 0 ? (
+                  <p className="text-xs text-stone-400 italic py-2">Belum ada aktivitas tercatat hari ini</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {activitiesByFerry.map((act) => (
+                      <div
+                        key={act.id}
+                        className="p-2 rounded-xl bg-warm-cream/40 border border-sand-border text-xs flex items-center justify-between gap-2"
+                      >
+                        <span className="font-semibold text-ink-black truncate">{act.title}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+                          {act.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* PIC: Ziyad */}
@@ -444,27 +454,31 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  {activitiesByZiyad.map((act) => (
-                    <div
-                      key={act.id}
-                      className="p-2 rounded-xl bg-warm-cream/40 border border-sand-border text-xs flex items-center justify-between gap-2"
-                    >
-                      <span className="font-semibold text-ink-black truncate">{act.title}</span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                          act.status === 'done'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : act.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-stone-100 text-stone-700'
-                        }`}
+                {activitiesByZiyad.length === 0 ? (
+                  <p className="text-xs text-stone-400 italic py-2">Belum ada aktivitas tercatat hari ini</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {activitiesByZiyad.map((act) => (
+                      <div
+                        key={act.id}
+                        className="p-2 rounded-xl bg-warm-cream/40 border border-sand-border text-xs flex items-center justify-between gap-2"
                       >
-                        {act.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                        <span className="font-semibold text-ink-black truncate">{act.title}</span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            act.status === 'done'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : act.status === 'in_progress'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-stone-100 text-stone-700'
+                          }`}
+                        >
+                          {act.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -502,28 +516,36 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {upcomingContent.map((content) => (
-              <div
-                key={content.id}
-                className="p-3.5 rounded-xl bg-warm-cream/50 border border-sand-border flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
-                    <span className="font-semibold text-violet-pulse uppercase text-[10px] tracking-wider">
-                      {content.format}
-                    </span>
-                    <span className="font-mono text-[11px]">{content.publish_date}</span>
-                  </div>
-                  <h4 className="font-bold text-xs text-ink-black line-clamp-2 mb-2">
-                    {content.title}
-                  </h4>
-                </div>
-                <div className="pt-2 border-t border-sand-border/70 flex items-center justify-between text-[11px]">
-                  <span className="text-stone-500 font-mono truncate">{content.channel?.handle}</span>
-                  <span className="font-bold text-stone-700 capitalize">{content.status}</span>
-                </div>
+            {upcomingContent.length === 0 ? (
+              <div className="py-8 text-center text-xs text-stone-gray col-span-full">
+                <Share2 className="w-8 h-8 text-ash-gray mx-auto mb-2" />
+                <p className="font-semibold text-ink-black">Belum ada jadwal konten untuk pekan ini</p>
+                <p className="text-[11px] text-stone-400 mt-0.5">Jadwalkan konten baru di Kalender Editorial</p>
               </div>
-            ))}
+            ) : (
+              upcomingContent.map((content) => (
+                <div
+                  key={content.id}
+                  className="p-3.5 rounded-xl bg-warm-cream/50 border border-sand-border flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
+                      <span className="font-semibold text-violet-pulse uppercase text-[10px] tracking-wider">
+                        {content.format}
+                      </span>
+                      <span className="font-mono text-[11px]">{content.publish_date}</span>
+                    </div>
+                    <h4 className="font-bold text-xs text-ink-black line-clamp-2 mb-2">
+                      {content.title}
+                    </h4>
+                  </div>
+                  <div className="pt-2 border-t border-sand-border/70 flex items-center justify-between text-[11px]">
+                    <span className="text-stone-500 font-mono truncate">{content.channel?.handle}</span>
+                    <span className="font-bold text-stone-700 capitalize">{content.status}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

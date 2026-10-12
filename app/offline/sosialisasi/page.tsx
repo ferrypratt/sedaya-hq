@@ -146,8 +146,25 @@ export default function SosialisasiPage() {
         </div>
 
         {/* Cards List */}
-        <div className="space-y-4">
-          {assists.map((assist) => (
+        {assists.length === 0 ? (
+          <div className="rounded-[28px] bg-paper-white border border-sand-border p-8 sm:p-12 text-center shadow-xs">
+            <Users className="w-12 h-12 text-ash-gray mx-auto mb-3" />
+            <h3 className="text-base font-bold text-ink-black mb-1">
+              Belum Ada Kegiatan Sosialisasi
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-gray max-w-md mx-auto mb-6">
+              Belum ada kegiatan sosialisasi instansi atau edukasi komunitas yang tercatat. Klik tombol di bawah untuk mencatat sosialisasi baru.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-pill-primary text-xs"
+            >
+              Catat Sosialisasi Baru
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {assists.map((assist) => (
             <div
               key={assist.id}
               className="bg-paper-white border border-sand-border rounded-2xl p-5 hover:border-stone-400 transition-all shadow-xs"
@@ -241,6 +258,7 @@ export default function SosialisasiPage() {
             </div>
           ))}
         </div>
+      )}
 
         {/* Modal Catat Sosialisasi */}
         {isModalOpen && (

@@ -256,8 +256,25 @@ export default function MarketingPropsPage() {
         </div>
 
         {/* Props Cards List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredProps.map((prop) => {
+        {filteredProps.length === 0 ? (
+          <div className="rounded-[28px] bg-paper-white border border-sand-border p-8 sm:p-12 text-center shadow-xs">
+            <Megaphone className="w-12 h-12 text-ash-gray mx-auto mb-3" />
+            <h3 className="text-base font-bold text-ink-black mb-1">
+              Belum Ada Data Alat Peraga / Reklame
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-gray max-w-md mx-auto mb-6">
+              Belum ada baliho, spanduk, umbul-umbul, atau sarana promosi fisik yang tercatat. Klik tombol di bawah untuk mencatat alat peraga baru.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-pill-primary text-xs"
+            >
+              Tambah Alat Peraga Promosi
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredProps.map((prop) => {
             const typeBadge = getItemTypeBadge(prop.item_type);
             const statusBadge = getStatusBadge(prop.status);
 
@@ -352,6 +369,7 @@ export default function MarketingPropsPage() {
             );
           })}
         </div>
+      )}
 
         {/* Modal Tambah Alat Peraga */}
         {isModalOpen && (
