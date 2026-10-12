@@ -88,7 +88,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@sedayaproperty.com"
+                placeholder="nama@sedayagroup.id"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cool-mist bg-paper-white text-ink-black text-sm placeholder:text-ash-gray focus:outline-none focus:border-ink-black focus:ring-1 focus:ring-ink-black transition"
               />
             </div>

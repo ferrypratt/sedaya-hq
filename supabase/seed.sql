@@ -3,15 +3,22 @@
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. PROFILES UPGRADE SNIPPET (Run this AFTER creating Ferry in Supabase Auth):
+-- 1. PROFILES UPGRADE SNIPPET (Run this AFTER creating users in Supabase Auth):
 -- ------------------------------------------------------------------------------
+-- -- Ferry (Leader):
 -- update public.profiles
--- set role = 'leader', position = 'Supervisor / Leader'
--- where full_name ilike '%Ferry%' or id = '<INSERT_FERRY_AUTH_UUID>';
+-- set role = 'leader', position = 'Supervisor / Leader', full_name = 'Ferry Pratama'
+-- where id in (select id from auth.users where email ilike '%ferry%@sedayagroup.id');
 --
--- For Ziyad & Shella (defaults to officer, set position if needed):
--- update public.profiles set position = 'Sr. Branding Officer' where full_name ilike '%Ziyad%';
--- update public.profiles set position = 'Jr. Branding Officer' where full_name ilike '%Shella%';
+-- -- Ziyad (Officer):
+-- update public.profiles
+-- set role = 'officer', position = 'Sr. Branding Officer', full_name = 'Ziyad'
+-- where id in (select id from auth.users where email ilike '%ziyad%@sedayagroup.id');
+--
+-- -- Shella (Officer):
+-- update public.profiles
+-- set role = 'officer', position = 'Jr. Branding Officer', full_name = 'Shella'
+-- where id in (select id from auth.users where email ilike '%shella%@sedayagroup.id');
 
 -- ------------------------------------------------------------------------------
 -- 2. PROJECTS (Active Projects, Business Unit, Upcoming)
