@@ -1,26 +1,140 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Canvas & Neutral Surfaces */
+  --color-paper-white: #ffffff;
+  --color-warm-cream: #f9f8f6;
+  --color-sand-border: #dad4c8;
+  --color-cool-mist: #e6e8ec;
+
+  /* Text & Contrast */
+  --color-ink-black: #000000;
+  --color-slate-gray: #222222;
+  --color-stone-gray: #55534e;
+  --color-ash-gray: #9f9b93;
+
+  /* Brand Accents */
+  --color-violet-pulse: #3859f9;
+  --color-lavender-banner: #b8a5e8;
+  --color-teal-mark: #0ec5b0;
+
+  /* Chromatic Moment Cards */
+  --color-lime-slide: #cbd810;
+  --color-ember-orange: #ff7614;
+  --color-signal-blue: #429dff;
+  --color-aqua-splash: #3bd3fd;
+  --color-cobalt: #0667d9;
+  --color-forest: #02693e;
+  --color-magenta: #8b045c;
+  --color-blush: #f8b9e3;
+
+  /* Functional Roles */
+  --background: var(--color-paper-white);
+  --foreground: var(--color-ink-black);
+  --muted: var(--color-warm-cream);
+  --muted-foreground: var(--color-stone-gray);
+  --border: var(--color-sand-border);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-paper-white: var(--color-paper-white);
+  --color-warm-cream: var(--color-warm-cream);
+  --color-sand-border: var(--color-sand-border);
+  --color-cool-mist: var(--color-cool-mist);
+  --color-ink-black: var(--color-ink-black);
+  --color-slate-gray: var(--color-slate-gray);
+  --color-stone-gray: var(--color-stone-gray);
+  --color-ash-gray: var(--color-ash-gray);
+  --color-violet-pulse: var(--color-violet-pulse);
+  --color-lavender-banner: var(--color-lavender-banner);
+  --color-teal-mark: var(--color-teal-mark);
+  --color-lime-slide: var(--color-lime-slide);
+  --color-ember-orange: var(--color-ember-orange);
+  --color-signal-blue: var(--color-signal-blue);
+  --color-aqua-splash: var(--color-aqua-splash);
+  --color-cobalt: var(--color-cobalt);
+  --color-forest: var(--color-forest);
+  --color-magenta: var(--color-magenta);
+  --color-blush: var(--color-blush);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-pill: 1584px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-paper-white);
+  color: var(--color-ink-black);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Utilities for Clay Style Reference */
+.btn-pill-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 1px 0px, rgba(0, 0, 0, 0.04) 0px -1px 1px 0px inset;
+}
+
+.btn-pill-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-0.5px);
+}
+
+.btn-pill-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: transparent;
+  border: 1px solid var(--color-sand-border);
+  color: #000000;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-pill-ghost:hover {
+  background-color: var(--color-warm-cream);
+}
+
+.card-clay {
+  background-color: #ffffff;
+  border: 1px solid var(--color-sand-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: none;
+}
+
+.card-cream {
+  background-color: var(--color-warm-cream);
+  border: 1px solid var(--color-sand-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: none;
+}
+
+/* Headings with tight negative tracking */
+h1, .h1 {
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+
+h2, .h2 {
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+
+h3, .h3 {
+  letter-spacing: -0.015em;
+  font-weight: 600;
 }
