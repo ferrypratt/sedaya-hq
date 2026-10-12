@@ -44,7 +44,7 @@ const mainNav: NavItem[] = [
 const offlineNav: NavItem[] = [
   { label: 'Event & Pameran', href: '/offline/events', icon: CalendarClock },
   { label: 'Dukungan Sales', href: '/offline/sales-support', icon: HelpCircle },
-  { label: 'Sosialisasi Instansi', href: '/offline/sosialisasi', icon: Users },
+  { label: 'Sosialisasi', href: '/offline/sosialisasi', icon: Users },
   { label: 'Materi / Baliho', href: '/offline/props', icon: Megaphone },
 ];
 

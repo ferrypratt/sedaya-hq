@@ -22,7 +22,7 @@ export function OfflineNavTabs() {
     },
     {
       href: '/offline/sosialisasi',
-      label: 'Sosialisasi Lembaga',
+      label: 'Sosialisasi',
       icon: Users,
       description: 'Outreach pabrik & instansi',
     },

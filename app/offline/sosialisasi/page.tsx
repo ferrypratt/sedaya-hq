@@ -102,7 +102,7 @@ export default function SosialisasiPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink-black">
-              Sosialisasi Instansi & Pabrik
+              Sosialisasi
             </h1>
             <p className="text-sm text-stone-gray mt-1">
               Pendampingan dan edukasi KPR subsidi ke serikat pekerja pabrik, kantor dinas pemerintah, koperasi, dan komunitas.

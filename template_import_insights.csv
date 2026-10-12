@@ -1,0 +1,7 @@
+channel_handle_or_id,period_type,period_start,period_end,metric_key,value
+@sedaya_grandsevilla,7d,2026-10-05,2026-10-11,reach,18450
+@sedaya_grandsevilla,7d,2026-10-05,2026-10-11,views,32600
+@sedaya_grandsevilla,7d,2026-10-05,2026-10-11,profile_visits,640
+sedayagroup.id,7d,2026-10-05,2026-10-11,sessions,1240
+sedayagroup.id,7d,2026-10-05,2026-10-11,users,950
+@sedayaproperty,7d,2026-10-05,2026-10-11,video_views,45200
