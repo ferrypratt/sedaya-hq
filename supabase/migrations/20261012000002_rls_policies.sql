@@ -34,22 +34,55 @@ alter table public.report_runs enable row level security;
 -- ==============================================================================
 -- 1. READ POLICIES (All authenticated users can read all tables)
 -- ==============================================================================
+drop policy if exists "Authenticated users can read profiles" on public.profiles;
 create policy "Authenticated users can read profiles" on public.profiles for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read projects" on public.projects;
 create policy "Authenticated users can read projects" on public.projects for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read unit_snapshots" on public.unit_snapshots;
 create policy "Authenticated users can read unit_snapshots" on public.unit_snapshots for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read kos_snapshots" on public.kos_snapshots;
 create policy "Authenticated users can read kos_snapshots" on public.kos_snapshots for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read channels" on public.channels;
 create policy "Authenticated users can read channels" on public.channels for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read channel_insights" on public.channel_insights;
 create policy "Authenticated users can read channel_insights" on public.channel_insights for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read daily_activities" on public.daily_activities;
 create policy "Authenticated users can read daily_activities" on public.daily_activities for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read marketing_plans" on public.marketing_plans;
 create policy "Authenticated users can read marketing_plans" on public.marketing_plans for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read plan_items" on public.plan_items;
 create policy "Authenticated users can read plan_items" on public.plan_items for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read evaluations" on public.evaluations;
 create policy "Authenticated users can read evaluations" on public.evaluations for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read evaluation_items" on public.evaluation_items;
 create policy "Authenticated users can read evaluation_items" on public.evaluation_items for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read content_items" on public.content_items;
 create policy "Authenticated users can read content_items" on public.content_items for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read events" on public.events;
 create policy "Authenticated users can read events" on public.events for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read sales_support_requests" on public.sales_support_requests;
 create policy "Authenticated users can read sales_support_requests" on public.sales_support_requests for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read sosialisasi_assists" on public.sosialisasi_assists;
 create policy "Authenticated users can read sosialisasi_assists" on public.sosialisasi_assists for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read marketing_props" on public.marketing_props;
 create policy "Authenticated users can read marketing_props" on public.marketing_props for select to authenticated using (true);
+
+drop policy if exists "Authenticated users can read report_runs" on public.report_runs;
 create policy "Authenticated users can read report_runs" on public.report_runs for select to authenticated using (true);
 
 -- ==============================================================================
@@ -57,35 +90,58 @@ create policy "Authenticated users can read report_runs" on public.report_runs f
 -- ==============================================================================
 
 -- Profiles: users can update own name/position; leaders can update all
+drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile" on public.profiles
   for update to authenticated
   using (id = auth.uid() or public.is_leader())
   with check (id = auth.uid() or public.is_leader());
 
 -- Master Data: Projects (Leader only)
+drop policy if exists "Leaders can insert projects" on public.projects;
 create policy "Leaders can insert projects" on public.projects for insert to authenticated with check (public.is_leader());
+
+drop policy if exists "Leaders can update projects" on public.projects;
 create policy "Leaders can update projects" on public.projects for update to authenticated using (public.is_leader()) with check (public.is_leader());
+
+drop policy if exists "Leaders can delete projects" on public.projects;
 create policy "Leaders can delete projects" on public.projects for delete to authenticated using (public.is_leader());
 
 -- Master Data: Channels (Leader only)
+drop policy if exists "Leaders can insert channels" on public.channels;
 create policy "Leaders can insert channels" on public.channels for insert to authenticated with check (public.is_leader());
+
+drop policy if exists "Leaders can update channels" on public.channels;
 create policy "Leaders can update channels" on public.channels for update to authenticated using (public.is_leader()) with check (public.is_leader());
+
+drop policy if exists "Leaders can delete channels" on public.channels;
 create policy "Leaders can delete channels" on public.channels for delete to authenticated using (public.is_leader());
 
 -- Inventory Snapshots: All authenticated can insert new snapshots; only Leader can update/delete
+drop policy if exists "Authenticated users can insert unit_snapshots" on public.unit_snapshots;
 create policy "Authenticated users can insert unit_snapshots" on public.unit_snapshots for insert to authenticated with check (true);
+
+drop policy if exists "Leaders can update unit_snapshots" on public.unit_snapshots;
 create policy "Leaders can update unit_snapshots" on public.unit_snapshots for update to authenticated using (public.is_leader()) with check (public.is_leader());
+
+drop policy if exists "Leaders can delete unit_snapshots" on public.unit_snapshots;
 create policy "Leaders can delete unit_snapshots" on public.unit_snapshots for delete to authenticated using (public.is_leader());
 
+drop policy if exists "Authenticated users can insert kos_snapshots" on public.kos_snapshots;
 create policy "Authenticated users can insert kos_snapshots" on public.kos_snapshots for insert to authenticated with check (true);
+
+drop policy if exists "Leaders can update kos_snapshots" on public.kos_snapshots;
 create policy "Leaders can update kos_snapshots" on public.kos_snapshots for update to authenticated using (public.is_leader()) with check (public.is_leader());
+
+drop policy if exists "Leaders can delete kos_snapshots" on public.kos_snapshots;
 create policy "Leaders can delete kos_snapshots" on public.kos_snapshots for delete to authenticated using (public.is_leader());
 
 -- Daily Activities: pic_id = auth.uid() or Leader
+drop policy if exists "Users can insert daily_activities" on public.daily_activities;
 create policy "Users can insert daily_activities" on public.daily_activities
   for insert to authenticated
   with check (pic_id = auth.uid() or public.is_leader());
 
+drop policy if exists "Users can update daily_activities" on public.daily_activities;
 create policy "Users can update daily_activities" on public.daily_activities
   for update to authenticated
   using (pic_id = auth.uid() or public.is_leader())
@@ -98,57 +154,109 @@ create policy "Users can update daily_activities" on public.daily_activities
     )
   );
 
+drop policy if exists "Users can delete daily_activities" on public.daily_activities;
 create policy "Users can delete daily_activities" on public.daily_activities
   for delete to authenticated
   using (pic_id = auth.uid() or public.is_leader());
 
 -- Marketing Plans & Plan Items
+drop policy if exists "Users can insert marketing_plans" on public.marketing_plans;
 create policy "Users can insert marketing_plans" on public.marketing_plans for insert to authenticated with check (created_by = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can update marketing_plans" on public.marketing_plans;
 create policy "Users can update marketing_plans" on public.marketing_plans for update to authenticated using (created_by = auth.uid() or public.is_leader()) with check (created_by = auth.uid() or public.is_leader());
+
+drop policy if exists "Leaders can delete marketing_plans" on public.marketing_plans;
 create policy "Leaders can delete marketing_plans" on public.marketing_plans for delete to authenticated using (public.is_leader());
 
+drop policy if exists "Users can insert plan_items" on public.plan_items;
 create policy "Users can insert plan_items" on public.plan_items for insert to authenticated with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can update plan_items" on public.plan_items;
 create policy "Users can update plan_items" on public.plan_items for update to authenticated using (pic_id = auth.uid() or public.is_leader()) with check (pic_id = auth.uid() or public.is_leader());
-create policy "Users can delete plan_items" on public.plan_items for delete to authenticated using (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can delete plan_items" on public.plan_items;
+create policy "Users can delete plan_items" on public.plan_items for delete to authenticated using (public.is_leader());
 
 -- Evaluations & Evaluation Items
+drop policy if exists "Users can insert evaluations" on public.evaluations;
 create policy "Users can insert evaluations" on public.evaluations for insert to authenticated with check (created_by = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can update evaluations" on public.evaluations;
 create policy "Users can update evaluations" on public.evaluations for update to authenticated using (created_by = auth.uid() or public.is_leader()) with check (created_by = auth.uid() or public.is_leader());
+
+drop policy if exists "Leaders can delete evaluations" on public.evaluations;
 create policy "Leaders can delete evaluations" on public.evaluations for delete to authenticated using (public.is_leader());
 
+drop policy if exists "Users can insert evaluation_items" on public.evaluation_items;
 create policy "Users can insert evaluation_items" on public.evaluation_items for insert to authenticated with check (true);
+
+drop policy if exists "Users can update evaluation_items" on public.evaluation_items;
 create policy "Users can update evaluation_items" on public.evaluation_items for update to authenticated using (true) with check (true);
+
+drop policy if exists "Leaders can delete evaluation_items" on public.evaluation_items;
 create policy "Leaders can delete evaluation_items" on public.evaluation_items for delete to authenticated using (public.is_leader());
 
 -- Content Items: pic_id = auth.uid() or Leader
+drop policy if exists "Users can insert content_items" on public.content_items;
 create policy "Users can insert content_items" on public.content_items for insert to authenticated with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can update content_items" on public.content_items;
 create policy "Users can update content_items" on public.content_items for update to authenticated using (pic_id = auth.uid() or public.is_leader()) with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can delete content_items" on public.content_items;
 create policy "Users can delete content_items" on public.content_items for delete to authenticated using (pic_id = auth.uid() or public.is_leader());
 
 -- Channel Insights
+drop policy if exists "Authenticated can insert channel_insights" on public.channel_insights;
 create policy "Authenticated can insert channel_insights" on public.channel_insights for insert to authenticated with check (true);
+
+drop policy if exists "Leaders can update channel_insights" on public.channel_insights;
 create policy "Leaders can update channel_insights" on public.channel_insights for update to authenticated using (public.is_leader()) with check (public.is_leader());
+
+drop policy if exists "Leaders can delete channel_insights" on public.channel_insights;
 create policy "Leaders can delete channel_insights" on public.channel_insights for delete to authenticated using (public.is_leader());
 
 -- Events: pic_id = auth.uid() or Leader
+drop policy if exists "Users can insert events" on public.events;
 create policy "Users can insert events" on public.events for insert to authenticated with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can update events" on public.events;
 create policy "Users can update events" on public.events for update to authenticated using (pic_id = auth.uid() or public.is_leader()) with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can delete events" on public.events;
 create policy "Users can delete events" on public.events for delete to authenticated using (pic_id = auth.uid() or public.is_leader());
 
 -- Sales Support Requests
+drop policy if exists "Users can insert sales_support_requests" on public.sales_support_requests;
 create policy "Users can insert sales_support_requests" on public.sales_support_requests for insert to authenticated with check (true);
+
+drop policy if exists "Users can update sales_support_requests" on public.sales_support_requests;
 create policy "Users can update sales_support_requests" on public.sales_support_requests for update to authenticated using (pic_id = auth.uid() or public.is_leader()) with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Leaders can delete sales_support_requests" on public.sales_support_requests;
 create policy "Leaders can delete sales_support_requests" on public.sales_support_requests for delete to authenticated using (public.is_leader());
 
 -- Sosialisasi Assists: pic_id = auth.uid() or Leader
+drop policy if exists "Users can insert sosialisasi_assists" on public.sosialisasi_assists;
 create policy "Users can insert sosialisasi_assists" on public.sosialisasi_assists for insert to authenticated with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can update sosialisasi_assists" on public.sosialisasi_assists;
 create policy "Users can update sosialisasi_assists" on public.sosialisasi_assists for update to authenticated using (pic_id = auth.uid() or public.is_leader()) with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Users can delete sosialisasi_assists" on public.sosialisasi_assists;
 create policy "Users can delete sosialisasi_assists" on public.sosialisasi_assists for delete to authenticated using (pic_id = auth.uid() or public.is_leader());
 
 -- Marketing Props: pic_id = auth.uid() or Leader
+drop policy if exists "Users can insert marketing_props" on public.marketing_props;
 create policy "Users can insert marketing_props" on public.marketing_props for insert to authenticated with check (true);
+
+drop policy if exists "Users can update marketing_props" on public.marketing_props;
 create policy "Users can update marketing_props" on public.marketing_props for update to authenticated using (pic_id = auth.uid() or public.is_leader()) with check (pic_id = auth.uid() or public.is_leader());
+
+drop policy if exists "Leaders can delete marketing_props" on public.marketing_props;
 create policy "Leaders can delete marketing_props" on public.marketing_props for delete to authenticated using (public.is_leader());
 
 -- Report Runs
+drop policy if exists "Users can insert report_runs" on public.report_runs;
 create policy "Users can insert report_runs" on public.report_runs for insert to authenticated with check (generated_by = auth.uid());
