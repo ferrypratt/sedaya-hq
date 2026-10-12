@@ -38,7 +38,6 @@ create policy "Authenticated users can read profiles" on public.profiles for sel
 create policy "Authenticated users can read projects" on public.projects for select to authenticated using (true);
 create policy "Authenticated users can read unit_snapshots" on public.unit_snapshots for select to authenticated using (true);
 create policy "Authenticated users can read kos_snapshots" on public.kos_snapshots for select to authenticated using (true);
-create table if not exists dummy_placeholder; drop table if exists dummy_placeholder;
 create policy "Authenticated users can read channels" on public.channels for select to authenticated using (true);
 create policy "Authenticated users can read channel_insights" on public.channel_insights for select to authenticated using (true);
 create policy "Authenticated users can read daily_activities" on public.daily_activities for select to authenticated using (true);
