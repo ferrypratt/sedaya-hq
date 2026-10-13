@@ -43,8 +43,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginPage = request.nextUrl.pathname.startsWith('/login');
+  const isDemoMode = request.cookies.get('sedaya_demo')?.value === '1';
 
-  if (!user && !isLoginPage) {
+  if (!user && !isDemoMode && !isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

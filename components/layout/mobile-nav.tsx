@@ -51,6 +51,7 @@ export function MobileNav() {
   }, [isOpen]);
 
   const handleLogout = async () => {
+    document.cookie = 'sedaya_demo=; path=/; max-age=0; SameSite=Lax';
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();

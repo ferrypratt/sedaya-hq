@@ -14,24 +14,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
+  const enterDemoWorkspace = () => {
+    document.cookie = 'sedaya_demo=1; path=/; max-age=86400; SameSite=Lax';
+    router.push('/');
+    router.refresh();
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
 
     try {
-      const isPlaceholder =
-        !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-        process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+      const configuredUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_FERRYPRATASUPABASE_URL;
+
+      const isPlaceholder = !configuredUrl || configuredUrl.includes('placeholder');
 
       if (isPlaceholder) {
-        // Unconfigured Supabase environment: seamlessly enter workspace in offline/demo mode
-        router.push('/');
+        enterDemoWorkspace();
         return;
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -41,7 +48,7 @@ export default function LoginPage() {
           error.message.includes('network') ||
           error.message.includes('Failed to fetch')
         ) {
-          router.push('/');
+          enterDemoWorkspace();
           return;
         }
         if (error.message.includes('Invalid login credentials')) {
@@ -54,18 +61,21 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
+        document.cookie = 'sedaya_demo=; path=/; max-age=0; SameSite=Lax';
         router.push('/');
         router.refresh();
+        return;
       }
+
+      setLoading(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi gangguan jaringan.';
-      // If network fails (e.g. placeholder URL unreachable), allow browsing workspace
       if (
         message.includes('fetch') ||
         message.includes('network') ||
         message.includes('placeholder')
       ) {
-        router.push('/');
+        enterDemoWorkspace();
         return;
       }
       setErrorMsg(message);
@@ -217,7 +227,7 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/')}
+                onClick={enterDemoWorkspace}
                 className="btn-pill-ghost w-full min-h-11 text-xs"
               >
                 <span>Eksplorasi Portal (Mode Demo)</span>
