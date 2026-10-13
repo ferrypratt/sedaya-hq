@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_MARKETING_PROPS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import { MarketingProp, PropItemType, PropStatus } from '@/lib/types/database';
 import {
   Megaphone,
@@ -23,7 +24,10 @@ function generatePropId(): string {
 }
 
 export default function MarketingPropsPage() {
-  const [propsList, setPropsList] = useState<MarketingProp[]>(INITIAL_MARKETING_PROPS);
+  const [propsList, setPropsList] = usePersistentState<MarketingProp[]>(
+    STORAGE_KEYS.MARKETING_PROPS,
+    INITIAL_MARKETING_PROPS
+  );
   const [typeFilter, setTypeFilter] = useState<'all' | PropItemType>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | PropStatus>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);

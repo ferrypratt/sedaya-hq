@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_SOSIALISASI_ASSISTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import { SosialisasiAssist } from '@/lib/types/database';
 import {
   Users,
@@ -25,7 +26,10 @@ function generateSosialisasiId(): string {
 }
 
 export default function SosialisasiPage() {
-  const [assists, setAssists] = useState<SosialisasiAssist[]>(INITIAL_SOSIALISASI_ASSISTS);
+  const [assists, setAssists] = usePersistentState<SosialisasiAssist[]>(
+    STORAGE_KEYS.SOSIALISASI,
+    INITIAL_SOSIALISASI_ASSISTS
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({

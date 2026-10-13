@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
 import { INITIAL_CONTENT_ITEMS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import {
   ContentItem,
   ContentPillar,
@@ -53,7 +54,10 @@ const KANBAN_COLUMNS: { status: ContentStatus; label: string; dotClass: string }
 ];
 
 export default function ContentCalendarPage() {
-  const [items, setItems] = useState<ContentItem[]>(INITIAL_CONTENT_ITEMS);
+  const [items, setItems] = usePersistentState<ContentItem[]>(
+    STORAGE_KEYS.CONTENT_ITEMS,
+    INITIAL_CONTENT_ITEMS
+  );
   const [viewMode, setViewMode] = useState<'calendar' | 'week' | 'kanban'>('kanban');
 
   // Filters: PIC strictly limited to Semua PIC, Ferry, and Ziyad

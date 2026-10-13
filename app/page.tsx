@@ -14,6 +14,14 @@ import {
   INITIAL_CONTENT_ITEMS,
 } from '@/lib/data/seed-plans-content';
 import { INITIAL_CHANNEL_INSIGHTS } from '@/lib/data/seed-channels';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import {
+  UnitSnapshot,
+  DailyActivity,
+  MarketingPlan,
+  PlanItem,
+  ContentItem,
+} from '@/lib/types/database';
 import { InstagramIcon, TikTokIcon } from '@/components/shared/icons';
 import {
   Building2,
@@ -30,13 +38,30 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [allHousingSnapshots] = usePersistentState<Record<string, UnitSnapshot[]>>(
+    STORAGE_KEYS.HOUSING_SNAPSHOTS,
+    INITIAL_UNIT_SNAPSHOTS
+  );
+  const [activities] = usePersistentState<DailyActivity[]>(
+    STORAGE_KEYS.ACTIVITIES,
+    INITIAL_ACTIVITIES
+  );
+  const [plans] = usePersistentState<(MarketingPlan & { items: PlanItem[] })[]>(
+    STORAGE_KEYS.MARKETING_PLANS,
+    INITIAL_MARKETING_PLANS
+  );
+  const [contentItems] = usePersistentState<ContentItem[]>(
+    STORAGE_KEYS.CONTENT_ITEMS,
+    INITIAL_CONTENT_ITEMS
+  );
+
   const activeHousingProjects = INITIAL_PROJECTS.filter(
     (p) => p.kind === 'active_project'
   );
 
   // Portfolio inventory aggregation
   const projectRows = activeHousingProjects.map((project) => {
-    const snapshots = INITIAL_UNIT_SNAPSHOTS[project.id] || [];
+    const snapshots = allHousingSnapshots[project.id] || [];
     const latest = snapshots[0];
     const belumTerjual = latest?.belum_terjual ?? 0;
     const booking = latest?.booking ?? 0;
@@ -93,9 +118,9 @@ export default function DashboardPage() {
 
   // Active weekly plan
   const activePlan =
-    INITIAL_MARKETING_PLANS.find(
+    plans.find(
       (p) => p.period_type === 'weekly' && p.status === 'active'
-    ) || INITIAL_MARKETING_PLANS[0];
+    ) || plans[0];
 
   const planItems = activePlan?.items || [];
   const completedPlanItems = planItems.filter((i) => i.status === 'done').length;
@@ -105,7 +130,7 @@ export default function DashboardPage() {
       : 0;
 
   // Activities for today
-  const todayActivities = INITIAL_ACTIVITIES;
+  const todayActivities = activities;
   const activitiesByFerry = todayActivities.filter((a) =>
     a.pic?.full_name.includes('Ferry')
   );
@@ -114,7 +139,7 @@ export default function DashboardPage() {
   );
 
   // Content due this week
-  const upcomingContent = INITIAL_CONTENT_ITEMS.slice(0, 4);
+  const upcomingContent = contentItems.slice(0, 4);
 
   // 7d channel metrics (computed strictly from actual seed snapshot values, zero fabricated deltas)
   const get7dMetric = (channelId: string, metricKey: string) => {

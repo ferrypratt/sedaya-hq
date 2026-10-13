@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_SALES_SUPPORT_REQUESTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import {
   SalesSupportRequest,
   SalesSupportType,
@@ -28,7 +29,10 @@ function generateSupportId(): string {
 }
 
 export default function SalesSupportPage() {
-  const [requests, setRequests] = useState<SalesSupportRequest[]>(INITIAL_SALES_SUPPORT_REQUESTS);
+  const [requests, setRequests] = usePersistentState<SalesSupportRequest[]>(
+    STORAGE_KEYS.SALES_SUPPORT,
+    INITIAL_SALES_SUPPORT_REQUESTS
+  );
   const [statusFilter, setStatusFilter] = useState<'all' | SalesSupportStatus>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | SalesSupportType>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);

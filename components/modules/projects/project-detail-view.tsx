@@ -9,6 +9,7 @@ import {
   INITIAL_KOS_SNAPSHOTS,
 } from '@/lib/data/seed-data';
 import { Project, UnitSnapshot, KosSnapshot } from '@/lib/types/database';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import {
   ArrowLeft,
   AlertTriangle,
@@ -36,12 +37,15 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
   const isHousing = project.kind === 'active_project';
   const isKos = project.kind === 'business_unit';
 
-  const [housingSnapshots, setHousingSnapshots] = useState<UnitSnapshot[]>(
-    INITIAL_UNIT_SNAPSHOTS[project.id] || []
-  );
-  const [kosSnapshots, setKosSnapshots] = useState<KosSnapshot[]>(
-    INITIAL_KOS_SNAPSHOTS[project.id] || []
-  );
+  const [allHousingSnapshots, setAllHousingSnapshots] = usePersistentState<
+    Record<string, UnitSnapshot[]>
+  >(STORAGE_KEYS.HOUSING_SNAPSHOTS, INITIAL_UNIT_SNAPSHOTS);
+  const [allKosSnapshots, setAllKosSnapshots] = usePersistentState<
+    Record<string, KosSnapshot[]>
+  >(STORAGE_KEYS.KOS_SNAPSHOTS, INITIAL_KOS_SNAPSHOTS);
+
+  const housingSnapshots = allHousingSnapshots[project.id] || [];
+  const kosSnapshots = allKosSnapshots[project.id] || [];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDate, setNewDate] = useState('2026-10-13');
@@ -99,7 +103,10 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      setHousingSnapshots([newSnap, ...housingSnapshots]);
+      setAllHousingSnapshots((prev) => ({
+        ...prev,
+        [project.id]: [newSnap, ...(prev[project.id] || [])],
+      }));
     } else if (isKos) {
       const newSnap: KosSnapshot = {
         id: `ks-${Date.now()}`,
@@ -111,7 +118,10 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      setKosSnapshots([newSnap, ...kosSnapshots]);
+      setAllKosSnapshots((prev) => ({
+        ...prev,
+        [project.id]: [newSnap, ...(prev[project.id] || [])],
+      }));
     }
     setIsModalOpen(false);
   };

@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_OFFLINE_EVENTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import { OfflineEvent, EventType, EventStatus } from '@/lib/types/database';
 import {
   Calendar,
@@ -26,7 +27,10 @@ function generateEventId(): string {
 }
 
 export default function OfflineEventsPage() {
-  const [events, setEvents] = useState<OfflineEvent[]>(INITIAL_OFFLINE_EVENTS);
+  const [events, setEvents] = usePersistentState<OfflineEvent[]>(
+    STORAGE_KEYS.OFFLINE_EVENTS,
+    INITIAL_OFFLINE_EVENTS
+  );
   const [typeFilter, setTypeFilter] = useState<'all' | EventType>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | EventStatus>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);

@@ -14,6 +14,7 @@ import {
   INITIAL_UNIT_SNAPSHOTS,
 } from '@/lib/data/seed-data';
 import { INITIAL_CHANNEL_INSIGHTS } from '@/lib/data/seed-channels';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import { Evaluation, EvaluationItem } from '@/lib/types/database';
 import {
   Plus,
@@ -25,9 +26,9 @@ import {
 } from 'lucide-react';
 
 export default function EvaluationsPage() {
-  const [evaluations, setEvaluations] = useState<
+  const [evaluations, setEvaluations] = usePersistentState<
     (Evaluation & { items: EvaluationItem[] })[]
-  >(INITIAL_EVALUATIONS);
+  >(STORAGE_KEYS.EVALUATIONS, INITIAL_EVALUATIONS);
   const [periodType, setPeriodType] = useState<'weekly' | 'monthly'>('weekly');
   const [isModalOpen, setIsModalOpen] = useState(false);
 

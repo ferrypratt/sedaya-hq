@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
 import { INITIAL_MARKETING_PLANS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import { MarketingPlan, PlanItem, PlanStatus } from '@/lib/types/database';
 import {
   Target,
@@ -18,7 +19,8 @@ import {
 } from 'lucide-react';
 
 export default function MarketingPlansPage() {
-  const [plans, setPlans] = useState<(MarketingPlan & { items: PlanItem[] })[]>(
+  const [plans, setPlans] = usePersistentState<(MarketingPlan & { items: PlanItem[] })[]>(
+    STORAGE_KEYS.MARKETING_PLANS,
     INITIAL_MARKETING_PLANS
   );
   const [periodFilter, setPeriodFilter] = useState<'all' | 'weekly' | 'monthly'>('all');

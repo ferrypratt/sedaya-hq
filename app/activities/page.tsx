@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { pdf } from '@react-pdf/renderer';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { ActivitiesPdfDocument } from '@/components/modules/activities/activities-pdf-document';
+import { usePersistentState, STORAGE_KEYS, syncActivityToCloud } from '@/lib/storage/persistence';
 import {
   INITIAL_ACTIVITIES,
   INITIAL_PROFILES,
@@ -25,6 +28,8 @@ import {
   Building2,
   ExternalLink,
   Send,
+  FileDown,
+  Loader2,
 } from 'lucide-react';
 
 const CATEGORY_LABELS: Record<ActivityCategory, string> = {
@@ -82,7 +87,11 @@ function getNextActivityId() {
 }
 
 export default function ActivitiesPage() {
-  const [activities, setActivities] = useState<DailyActivity[]>(INITIAL_ACTIVITIES);
+  const [activities, setActivities] = usePersistentState<DailyActivity[]>(
+    STORAGE_KEYS.ACTIVITIES,
+    INITIAL_ACTIVITIES
+  );
+  const [isExporting, setIsExporting] = useState(false);
 
   // PIC Filter strictly limited to Semua PIC, Ferry, and Ziyad
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
@@ -91,6 +100,45 @@ export default function ActivitiesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
+
+  const handleExportPdf = async () => {
+    try {
+      setIsExporting(true);
+      const picLabel =
+        picFilter === 'ferry'
+          ? 'Ferry Pratama'
+          : picFilter === 'ziyad'
+          ? 'Ziyad'
+          : 'Semua PIC';
+      const dateLabel =
+        viewMode === 'day'
+          ? `Harian (${selectedDate})`
+          : 'Semua Tanggal';
+
+      const doc = (
+        <ActivitiesPdfDocument
+          activities={filteredActivities}
+          dateTitle={dateLabel}
+          picName={picLabel}
+          generatedBy="Ferry Pratama (Supervisor)"
+        />
+      );
+
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Laporan_Aktivitas_Sedaya_${selectedDate}_${picFilter}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Gagal membuat PDF: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // Quick-Add Modal
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -171,6 +219,7 @@ export default function ActivitiesPage() {
     };
 
     setActivities([newActivity, ...activities]);
+    syncActivityToCloud(newActivity as unknown as Record<string, unknown>);
     setIsAddOpen(false);
     setFormData({
       title: '',
@@ -194,14 +243,30 @@ export default function ActivitiesPage() {
           title="Aktivitas Harian Tim"
           description="Pencatatan eksekusi kerja harian, bukti output konten/desain, pengalihan tugas (carry over), dan catatan evaluasi supervisor."
           actions={
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(true)}
-              className="btn-pill-primary"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Catat Aktivitas</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={isExporting}
+                className="btn-pill-ghost"
+                title="Export daftar aktivitas ke format PDF (.pdf)"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-gray" />
+                ) : (
+                  <FileDown className="w-3.5 h-3.5 text-stone-gray" />
+                )}
+                <span>{isExporting ? 'Menyiapkan PDF...' : 'Export PDF'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddOpen(true)}
+                className="btn-pill-primary"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Catat Aktivitas</span>
+              </button>
+            </div>
           }
         />
 

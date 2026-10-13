@@ -10,6 +10,7 @@ import {
   INITIAL_KOS_SNAPSHOTS,
 } from '@/lib/data/seed-data';
 import { Project, UnitSnapshot, KosSnapshot } from '@/lib/types/database';
+import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
 import {
   AlertTriangle,
   ArrowRight,
@@ -24,6 +25,15 @@ export default function ProjectsPage() {
   const [filter, setFilter] = useState<'all' | 'active_project' | 'business_unit' | 'upcoming'>('all');
   const [displayMode, setDisplayMode] = useState<'cards' | 'table'>('cards');
 
+  const [allHousingSnapshots] = usePersistentState<Record<string, UnitSnapshot[]>>(
+    STORAGE_KEYS.HOUSING_SNAPSHOTS,
+    INITIAL_UNIT_SNAPSHOTS
+  );
+  const [allKosSnapshots] = usePersistentState<Record<string, KosSnapshot[]>>(
+    STORAGE_KEYS.KOS_SNAPSHOTS,
+    INITIAL_KOS_SNAPSHOTS
+  );
+
   const counts = {
     all: INITIAL_PROJECTS.length,
     active_project: INITIAL_PROJECTS.filter((p) => p.kind === 'active_project').length,
@@ -37,7 +47,7 @@ export default function ProjectsPage() {
   });
 
   const getHousingMetrics = (project: Project) => {
-    const snapshots = INITIAL_UNIT_SNAPSHOTS[project.id] || [];
+    const snapshots = allHousingSnapshots[project.id] || [];
     const latest = snapshots[0] as UnitSnapshot | undefined;
     if (!latest) return null;
 
@@ -67,7 +77,7 @@ export default function ProjectsPage() {
   };
 
   const getKosMetrics = (project: Project) => {
-    const snapshots = INITIAL_KOS_SNAPSHOTS[project.id] || [];
+    const snapshots = allKosSnapshots[project.id] || [];
     const latest = snapshots[0] as KosSnapshot | undefined;
     if (!latest) return null;
 
