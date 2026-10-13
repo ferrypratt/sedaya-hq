@@ -44,8 +44,12 @@ export async function updateSession(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname.startsWith('/login');
   const isDemoMode = request.cookies.get('sedaya_demo')?.value === '1';
+  const isPublicRoute =
+    request.nextUrl.pathname.startsWith('/activities/public') ||
+    request.nextUrl.pathname.startsWith('/share') ||
+    request.nextUrl.pathname.startsWith('/api');
 
-  if (!user && !isDemoMode && !isLoginPage) {
+  if (!user && !isDemoMode && !isLoginPage && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

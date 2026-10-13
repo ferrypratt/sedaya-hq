@@ -185,3 +185,20 @@ export async function syncActivityToCloud(activity: Record<string, unknown>): Pr
     // Silently continue
   }
 }
+
+/**
+ * Permanently delete a record from cloud server and database.
+ */
+export async function deleteFromCloud(moduleKey: string, id: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  try {
+    const res = await fetch(
+      `/api/sync?module=${encodeURIComponent(moduleKey)}&id=${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+

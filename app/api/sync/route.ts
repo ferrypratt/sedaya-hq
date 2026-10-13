@@ -451,3 +451,50 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const moduleName = searchParams.get('module');
+    const id = searchParams.get('id');
+
+    if (!moduleName || !id) {
+      return NextResponse.json(
+        { success: false, error: 'Parameter module and id are required' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+
+    const moduleTableMap: Record<string, string> = {
+      sedaya_activities: 'daily_activities',
+      sedaya_content_items: 'content_items',
+      sedaya_offline_events: 'events',
+      sedaya_sales_support: 'sales_support_requests',
+      sedaya_sosialisasi: 'sosialisasi_assists',
+      sedaya_marketing_props: 'marketing_props',
+      sedaya_marketing_plans: 'marketing_plans',
+      sedaya_evaluations: 'evaluations',
+    };
+
+    const targetTable = moduleTableMap[moduleName];
+    if (!targetTable) {
+      return NextResponse.json({ success: false, error: 'Unknown module' }, { status: 400 });
+    }
+
+    const { error } = await supabase.from(targetTable).delete().eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, message: `Deleted ${id} from ${targetTable}` });
+  } catch (err) {
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
+}
+

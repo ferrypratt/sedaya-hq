@@ -11,6 +11,7 @@ import {
   STORAGE_KEYS,
   syncActivityToCloud,
   generateUUID,
+  deleteFromCloud,
 } from '@/lib/storage/persistence';
 import {
   INITIAL_ACTIVITIES,
@@ -35,6 +36,10 @@ import {
   Send,
   FileDown,
   Loader2,
+  Pencil,
+  Trash2,
+  Share2,
+  AlertTriangle,
 } from 'lucide-react';
 
 const CATEGORY_LABELS: Record<ActivityCategory, string> = {
@@ -157,6 +162,101 @@ export default function ActivitiesPage() {
     notes: '',
   });
 
+  // Toast Feedback State
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
+
+  const handleCopyPublicLink = () => {
+    if (typeof window !== 'undefined') {
+      const publicUrl = `${window.location.origin}/activities/public`;
+      navigator.clipboard.writeText(publicUrl);
+      showToast('Tautan publik berhasil disalin ke clipboard! Siap dikirim ke WhatsApp Direksi.');
+    }
+  };
+
+  // Edit Activity State
+  const [editingActivity, setEditingActivity] = useState<DailyActivity | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    description: '',
+    pic_id: INITIAL_PROFILES[0].id,
+    activity_date: '2026-10-13',
+    category: 'content_production' as ActivityCategory,
+    project_id: INITIAL_PROJECTS[0].id,
+    status: 'planned' as ActivityStatus,
+    duration_minutes: 60,
+    output_url: '',
+    notes: '',
+    leader_note: '',
+  });
+
+  const handleOpenEditModal = (activity: DailyActivity) => {
+    setEditingActivity(activity);
+    setEditFormData({
+      title: activity.title || '',
+      description: activity.description || '',
+      pic_id: activity.pic_id || INITIAL_PROFILES[0].id,
+      activity_date: activity.activity_date || selectedDate,
+      category: activity.category,
+      project_id: activity.project_id || INITIAL_PROJECTS[0].id,
+      status: activity.status,
+      duration_minutes: activity.duration_minutes || 60,
+      output_url: activity.output_url || '',
+      notes: activity.notes || '',
+      leader_note: activity.leader_note || '',
+    });
+  };
+
+  const handleSaveEditActivity = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingActivity) return;
+
+    const picObj =
+      INITIAL_PROFILES.find((p) => p.id === editFormData.pic_id) || INITIAL_PROFILES[0];
+    const projectObj = INITIAL_PROJECTS.find((p) => p.id === editFormData.project_id);
+
+    const updatedAct: DailyActivity = {
+      ...editingActivity,
+      title: editFormData.title,
+      pic_id: editFormData.pic_id,
+      activity_date: editFormData.activity_date,
+      category: editFormData.category,
+      project_id: editFormData.project_id || null,
+      status: editFormData.status,
+      duration_minutes: Number(editFormData.duration_minutes),
+      description: editFormData.description || null,
+      output_url: editFormData.output_url || null,
+      notes: editFormData.notes || null,
+      leader_note: editFormData.leader_note || null,
+      updated_at: new Date().toISOString(),
+      pic: picObj,
+      project: projectObj,
+    };
+
+    setActivities(
+      activities.map((a) => (a.id === updatedAct.id ? updatedAct : a))
+    );
+    setEditingActivity(null);
+    showToast('Aktivitas berhasil diperbarui dan tersimpan ke cloud.');
+  };
+
+  // Delete Activity State
+  const [deletingActivity, setDeletingActivity] = useState<DailyActivity | null>(null);
+
+  const handleConfirmDelete = async () => {
+    if (!deletingActivity) return;
+    const targetId = deletingActivity.id;
+    setActivities(activities.filter((a) => a.id !== targetId));
+    setDeletingActivity(null);
+    await deleteFromCloud(STORAGE_KEYS.ACTIVITIES, targetId);
+    showToast('Aktivitas berhasil dihapus permanen dari sistem.');
+  };
+
   // Leader Note Modal
   const [noteModalActivity, setNoteModalActivity] = useState<DailyActivity | null>(null);
   const [leaderNoteText, setLeaderNoteText] = useState('');
@@ -239,6 +339,18 @@ export default function ActivitiesPage() {
 
   return (
     <AppShell>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 bg-ink-black text-paper-white px-4 py-3 rounded-xl shadow-lg border border-sand-border text-xs flex items-center gap-2 transition-transform"
+        >
+          <CheckCircle2 className="w-4 h-4 text-forest-emerald shrink-0" />
+          <span>{toastMessage}</span>
+        </aside>
+      )}
+
       <div className="space-y-6">
         <PageHeader
           section="Operasional Harian"
@@ -246,12 +358,22 @@ export default function ActivitiesPage() {
           title="Aktivitas Harian Tim"
           description="Pencatatan eksekusi kerja harian, bukti output konten/desain, pengalihan tugas (carry over), dan catatan evaluasi supervisor."
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopyPublicLink}
+                className="btn-pill-ghost text-xs py-2 px-3"
+                title="Salin tautan publik khusus peninjauan Direksi & Manajemen"
+              >
+                <Share2 className="w-3.5 h-3.5 text-stone-gray" />
+                <span>Bagikan ke Direksi</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleExportPdf}
                 disabled={isExporting}
-                className="btn-pill-ghost"
+                className="btn-pill-ghost text-xs py-2 px-3"
                 title="Export daftar aktivitas ke format PDF (.pdf)"
               >
                 {isExporting ? (
@@ -264,7 +386,7 @@ export default function ActivitiesPage() {
               <button
                 type="button"
                 onClick={() => setIsAddOpen(true)}
-                className="btn-pill-primary"
+                className="btn-pill-primary text-xs py-2 px-3.5"
               >
                 <Plus className="w-4 h-4" />
                 <span>Catat Aktivitas</span>
@@ -561,6 +683,26 @@ export default function ActivitiesPage() {
                           <span>Tandai Selesai</span>
                         </button>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(act)}
+                        className="btn-pill-ghost text-xs py-1.5 px-3 min-h-9"
+                        title="Edit rincian aktivitas"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-stone-gray" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeletingActivity(act)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-9 rounded-full border border-sand-border text-xs font-semibold text-stone-gray hover:text-ember hover:border-ember/40 hover:bg-ember-surface/40 transition-colors"
+                        title="Hapus aktivitas ini"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus</span>
+                      </button>
                     </div>
 
                     <button
@@ -790,6 +932,270 @@ export default function ActivitiesPage() {
               </button>
             </div>
           </form>
+        </Modal>
+
+        {/* Modal: Edit Activity */}
+        <Modal
+          open={Boolean(editingActivity)}
+          onClose={() => setEditingActivity(null)}
+          title="Edit Rincian Aktivitas"
+          subtitle="Perbarui data tugas, durasi, status, atau catatan output."
+        >
+          <form onSubmit={handleSaveEditActivity} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Judul Tugas / Aktivitas *
+              </label>
+              <input
+                type="text"
+                required
+                value={editFormData.title}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, title: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  PIC Penanggung Jawab *
+                </label>
+                <select
+                  value={editFormData.pic_id}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, pic_id: e.target.value })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  <option value={INITIAL_PROFILES[0].id}>Ferry Pratama (Supervisor)</option>
+                  <option value={INITIAL_PROFILES[1].id}>Ziyad (Sr. Officer)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Tanggal Aktivitas *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={editFormData.activity_date}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, activity_date: e.target.value })
+                  }
+                  className="input-clay text-xs font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Kategori Aktivitas *
+                </label>
+                <select
+                  value={editFormData.category}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      category: e.target.value as ActivityCategory,
+                    })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Proyek Terkait
+                </label>
+                <select
+                  value={editFormData.project_id}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, project_id: e.target.value })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  <option value="">Semua / Korporat</option>
+                  {INITIAL_PROJECTS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Status Penyelesaian
+                </label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      status: e.target.value as ActivityStatus,
+                    })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  <option value="planned">Direncanakan</option>
+                  <option value="in_progress">Sedang Berjalan</option>
+                  <option value="done">Selesai</option>
+                  <option value="blocked">Terkendala</option>
+                  <option value="carried_over">Dialihkan</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Estimasi Durasi (Menit)
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  step="10"
+                  value={editFormData.duration_minutes}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      duration_minutes: Number(e.target.value),
+                    })
+                  }
+                  className="input-clay metric-mono"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Deskripsi Ringkas
+              </label>
+              <textarea
+                rows={2}
+                value={editFormData.description}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, description: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Tautan Output / Bukti Kerja
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={editFormData.output_url}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, output_url: e.target.value })
+                  }
+                  className="input-clay"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Catatan Tambahan
+                </label>
+                <input
+                  type="text"
+                  placeholder="Catatan pengerjaan..."
+                  value={editFormData.notes}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, notes: e.target.value })
+                  }
+                  className="input-clay"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Evaluasi / Arahan Supervisor (Ferry Pratama)
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Catatan dari supervisor..."
+                value={editFormData.leader_note}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, leader_note: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div className="pt-3 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setEditingActivity(null)}
+                className="btn-pill-ghost"
+              >
+                Batal
+              </button>
+              <button type="submit" className="btn-pill-primary">
+                Simpan Perubahan
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal: Delete Confirmation */}
+        <Modal
+          open={Boolean(deletingActivity)}
+          onClose={() => setDeletingActivity(null)}
+          title="Konfirmasi Hapus Aktivitas"
+          subtitle="Tindakan ini permanen dan akan menghapus data dari database cloud."
+          maxWidthClass="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-ember-surface/30 border border-ember/25 text-xs text-ink-black space-y-2">
+              <div className="flex items-center gap-2 text-ember font-bold">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Peringatan Penghapusan</span>
+              </div>
+              <p className="leading-relaxed">
+                Aktivitas berikut akan dihapus secara permanen dari daftar dan database:
+              </p>
+              <p className="font-semibold text-ink-black bg-paper-white p-2.5 rounded-lg border border-sand-border">
+                {deletingActivity?.title}
+              </p>
+              <p className="text-[11px] text-stone-gray">
+                PIC: {deletingActivity?.pic?.full_name} • Tanggal: {deletingActivity?.activity_date}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingActivity(null)}
+                className="btn-pill-ghost text-xs"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-ember text-paper-white text-xs font-semibold hover:bg-ember/90 transition-colors shadow-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Ya, Hapus Permanen</span>
+              </button>
+            </div>
+          </div>
         </Modal>
       </div>
     </AppShell>
