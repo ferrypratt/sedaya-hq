@@ -23,6 +23,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { SedayaLogo } from '@/components/shared/sedaya-logo';
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -82,8 +83,8 @@ export function MobileNav() {
       {/* Top Mobile Bar */}
       <header className="sticky top-0 z-40 bg-paper-white border-b border-sand-border px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 min-h-11">
-          <div className="w-7 h-7 rounded-lg bg-ink-black flex items-center justify-center text-paper-white font-bold text-xs">
-            S
+          <div className="w-8 h-8 rounded-lg bg-paper-white border border-sand-border flex items-center justify-center p-0.5 text-ink-black shrink-0 shadow-xs">
+            <SedayaLogo className="w-full h-full" />
           </div>
           <div>
             <span className="font-bold text-sm tracking-tight text-ink-black block leading-none">

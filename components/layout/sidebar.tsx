@@ -22,6 +22,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 import { Profile } from '@/lib/types/database';
+import { SedayaLogo } from '@/components/shared/sedaya-logo';
 
 interface NavItem {
   label: string;
@@ -155,8 +156,8 @@ export function Sidebar() {
         {/* Brand Identity Header */}
         <div className="h-13 px-5 border-b border-sand-border flex items-center justify-between shrink-0 bg-warm-cream">
           <Link href="/" className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-ink-black flex items-center justify-center text-paper-white font-bold text-xs tracking-tight shrink-0">
-              S
+            <div className="w-8 h-8 rounded-lg bg-paper-white border border-sand-border flex items-center justify-center p-0.5 text-ink-black shrink-0 shadow-xs">
+              <SedayaLogo className="w-full h-full" />
             </div>
             <div className="min-w-0">
               <span className="font-bold text-sm tracking-tight block text-ink-black leading-none truncate">
