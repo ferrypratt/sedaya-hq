@@ -9,7 +9,7 @@ import {
   INITIAL_KOS_SNAPSHOTS,
 } from '@/lib/data/seed-data';
 import { Project, UnitSnapshot, KosSnapshot } from '@/lib/types/database';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import {
   ArrowLeft,
   AlertTriangle,
@@ -91,7 +91,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     e.preventDefault();
     if (isHousing) {
       const newSnap: UnitSnapshot = {
-        id: `us-${Date.now()}`,
+        id: generateUUID(),
         project_id: project.id,
         snapshot_date: newDate,
         belum_terjual: Number(formHousing.belum_terjual),
@@ -109,7 +109,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
       }));
     } else if (isKos) {
       const newSnap: KosSnapshot = {
-        id: `ks-${Date.now()}`,
+        id: generateUUID(),
         project_id: project.id,
         snapshot_date: newDate,
         terisi: Number(formKos.terisi),

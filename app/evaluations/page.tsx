@@ -14,7 +14,7 @@ import {
   INITIAL_UNIT_SNAPSHOTS,
 } from '@/lib/data/seed-data';
 import { INITIAL_CHANNEL_INSIGHTS } from '@/lib/data/seed-channels';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import { Evaluation, EvaluationItem } from '@/lib/types/database';
 import {
   Plus,
@@ -118,7 +118,7 @@ export default function EvaluationsPage() {
   const handleCreateEval = (e: React.FormEvent) => {
     e.preventDefault();
     const newEval: Evaluation & { items: EvaluationItem[] } = {
-      id: `eval-${Date.now()}`,
+      id: generateUUID(),
       period_type: periodType,
       period_start: newEvalForm.period_start,
       period_end: newEvalForm.period_end,

@@ -1,7 +1,21 @@
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+
+/**
+ * Universal UUID generator compatible with Postgres UUID primary keys.
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 /**
  * Universal safe localStorage helper for client components.
@@ -48,7 +62,7 @@ function subscribe(callback: () => void) {
 
 /**
  * React hook for real-time persistent state backed by localStorage
- * with automatic sync across pages and tabs via useSyncExternalStore.
+ * and synchronized with Vercel Cloud Server & Supabase Database.
  */
 export function usePersistentState<T>(
   key: string,
@@ -74,6 +88,39 @@ export function usePersistentState<T>(
 
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
+  // Background Cloud Sync on mount: fetch latest records from server/database
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function syncFromCloud() {
+      try {
+        const res = await fetch(`/api/sync?module=${encodeURIComponent(key)}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!isCancelled && json.success && json.data) {
+          const cloudData = json.data;
+          // If cloud data is non-empty, update local store so all devices stay in sync
+          const hasContent =
+            Array.isArray(cloudData)
+              ? cloudData.length > 0
+              : typeof cloudData === 'object' && Object.keys(cloudData).length > 0;
+
+          if (hasContent) {
+            setLocalStorage(key, cloudData);
+          }
+        }
+      } catch {
+        // Silently continue with local storage
+      }
+    }
+
+    syncFromCloud();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [key]);
+
   const setPersistentState = useCallback(
     (valOrUpdater: T | ((prev: T) => T)) => {
       const current = getSnapshot();
@@ -81,7 +128,24 @@ export function usePersistentState<T>(
         typeof valOrUpdater === 'function'
           ? (valOrUpdater as (prev: T) => T)(current)
           : valOrUpdater;
+
+      // 1. Instant local persistence (0ms latency)
       setLocalStorage(key, nextValue);
+
+      // 2. Asynchronous push to cloud server & Supabase database
+      try {
+        fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            module: key,
+            items: Array.isArray(nextValue) ? nextValue : undefined,
+            item: !Array.isArray(nextValue) ? nextValue : undefined,
+          }),
+        }).catch(() => {});
+      } catch {
+        // Ignore network errors
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key]
@@ -107,18 +171,17 @@ export const STORAGE_KEYS = {
 } as const;
 
 /**
- * Asynchronous background sync to Supabase when connected.
- * Fails silently so offline or demo mode operates uninterrupted.
+ * Asynchronous background sync directly to Supabase when connected.
  */
 export async function syncActivityToCloud(activity: Record<string, unknown>): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from('daily_activities').upsert(activity, { onConflict: 'id' });
+    const copy = { ...activity };
+    delete copy.pic;
+    delete copy.project;
+    await supabase.from('daily_activities').upsert(copy, { onConflict: 'id' });
   } catch {
-    // Silently continue with local storage
+    // Silently continue
   }
 }

@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_OFFLINE_EVENTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import { OfflineEvent, EventType, EventStatus } from '@/lib/types/database';
 import {
   Calendar,
@@ -19,12 +19,6 @@ import {
   FileText,
   ExternalLink,
 } from 'lucide-react';
-
-let nextEventCounter = 100;
-function generateEventId(): string {
-  nextEventCounter += 1;
-  return `evt-${nextEventCounter}`;
-}
 
 export default function OfflineEventsPage() {
   const [events, setEvents] = usePersistentState<OfflineEvent[]>(
@@ -92,7 +86,7 @@ export default function OfflineEventsPage() {
     if (!formData.title || !formData.location) return;
 
     const newEv: OfflineEvent = {
-      id: generateEventId(),
+      id: generateUUID(),
       title: formData.title,
       event_type: formData.event_type,
       event_date: formData.event_date,

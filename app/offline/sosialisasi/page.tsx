@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_SOSIALISASI_ASSISTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import { SosialisasiAssist } from '@/lib/types/database';
 import {
   Users,
@@ -18,12 +18,6 @@ import {
   ExternalLink,
   CheckCircle2,
 } from 'lucide-react';
-
-let nextSosialisasiCounter = 100;
-function generateSosialisasiId(): string {
-  nextSosialisasiCounter += 1;
-  return `sos-${nextSosialisasiCounter}`;
-}
 
 export default function SosialisasiPage() {
   const [assists, setAssists] = usePersistentState<SosialisasiAssist[]>(
@@ -54,7 +48,7 @@ export default function SosialisasiPage() {
     if (!formData.institution || !formData.location) return;
 
     const newAssist: SosialisasiAssist = {
-      id: generateSosialisasiId(),
+      id: generateUUID(),
       activity_date: formData.activity_date,
       location: formData.location,
       institution: formData.institution,

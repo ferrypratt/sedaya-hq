@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
 import { INITIAL_MARKETING_PLANS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import { MarketingPlan, PlanItem, PlanStatus } from '@/lib/types/database';
 import {
   Target,
@@ -63,7 +63,7 @@ export default function MarketingPlansPage() {
   const handleCreatePlan = (e: React.FormEvent) => {
     e.preventDefault();
     const newPlan: MarketingPlan & { items: PlanItem[] } = {
-      id: `mp-${Date.now()}`,
+      id: generateUUID(),
       title: newPlanForm.title,
       objective: newPlanForm.objective,
       period_type: newPlanForm.period_type,
@@ -97,7 +97,7 @@ export default function MarketingPlansPage() {
     const proj = INITIAL_PROJECTS.find((p) => p.id === newItemForm.project_id);
 
     const newItem: PlanItem = {
-      id: `pi-${Date.now()}`,
+      id: generateUUID(),
       plan_id: activePlanForNewItem,
       title: newItemForm.title,
       description: newItemForm.description,

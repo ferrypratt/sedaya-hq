@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_SALES_SUPPORT_REQUESTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import {
   SalesSupportRequest,
   SalesSupportType,
@@ -21,12 +21,6 @@ import {
   Users,
   ExternalLink,
 } from 'lucide-react';
-
-let nextSupportCounter = 100;
-function generateSupportId(): string {
-  nextSupportCounter += 1;
-  return `ssr-${nextSupportCounter}`;
-}
 
 export default function SalesSupportPage() {
   const [requests, setRequests] = usePersistentState<SalesSupportRequest[]>(
@@ -95,7 +89,7 @@ export default function SalesSupportPage() {
     if (!formData.requested_by || !formData.description) return;
 
     const newReq: SalesSupportRequest = {
-      id: generateSupportId(),
+      id: generateUUID(),
       request_date: new Date().toISOString().split('T')[0],
       requested_by: formData.requested_by,
       project_id: formData.project_id,

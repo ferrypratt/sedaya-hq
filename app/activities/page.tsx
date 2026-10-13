@@ -6,7 +6,12 @@ import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
 import { ActivitiesPdfDocument } from '@/components/modules/activities/activities-pdf-document';
-import { usePersistentState, STORAGE_KEYS, syncActivityToCloud } from '@/lib/storage/persistence';
+import {
+  usePersistentState,
+  STORAGE_KEYS,
+  syncActivityToCloud,
+  generateUUID,
+} from '@/lib/storage/persistence';
 import {
   INITIAL_ACTIVITIES,
   INITIAL_PROFILES,
@@ -80,10 +85,8 @@ const STATUS_CONFIG: Record<
   },
 };
 
-let nextActivityId = 100;
-function getNextActivityId() {
-  nextActivityId += 1;
-  return `act-${nextActivityId}`;
+function getNextActivityId(): string {
+  return generateUUID();
 }
 
 export default function ActivitiesPage() {

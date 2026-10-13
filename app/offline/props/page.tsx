@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/modal';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_MARKETING_PROPS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import { MarketingProp, PropItemType, PropStatus } from '@/lib/types/database';
 import {
   Megaphone,
@@ -16,12 +16,6 @@ import {
   RefreshCw,
   ExternalLink,
 } from 'lucide-react';
-
-let nextPropCounter = 100;
-function generatePropId(): string {
-  nextPropCounter += 1;
-  return `prop-${nextPropCounter}`;
-}
 
 export default function MarketingPropsPage() {
   const [propsList, setPropsList] = usePersistentState<MarketingProp[]>(
@@ -103,7 +97,7 @@ export default function MarketingPropsPage() {
     if (!formData.location_description) return;
 
     const newProp: MarketingProp = {
-      id: generatePropId(),
+      id: generateUUID(),
       item_type: formData.item_type,
       project_id: formData.project_id,
       is_revitalization: formData.is_revitalization,

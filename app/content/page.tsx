@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
 import { INITIAL_CONTENT_ITEMS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
-import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import {
   ContentItem,
   ContentPillar,
@@ -102,7 +102,7 @@ export default function ContentCalendarPage() {
     const projObj = INITIAL_PROJECTS.find((p) => p.id === formData.project_id);
 
     const newItem: ContentItem = {
-      id: `cnt-${Date.now()}`,
+      id: generateUUID(),
       title: formData.title,
       pillar: formData.pillar,
       format: formData.format,
