@@ -93,24 +93,107 @@ values
 -- Memberikan hak akses penuh kepada pengguna terotentikasi dan service role
 -- sehingga input data dari perangkat mana pun diizinkan dan tersimpan permanen.
 
-do $$
-declare
-  t text;
-  tables text[] := array[
-    'profiles', 'projects', 'unit_snapshots', 'kos_snapshots', 'channels',
-    'channel_insights', 'daily_activities', 'marketing_plans', 'plan_items',
-    'evaluations', 'evaluation_items', 'content_items', 'events',
-    'sales_support_requests', 'sosialisasi_assists', 'marketing_props', 'report_runs'
-  ];
-begin
-  foreach t in array tables loop
-    execute format('alter table public.%I enable row level security;', t);
-    execute format('drop policy if exists "allow_all_authenticated" on public.%I;', t);
-    execute format('create policy "allow_all_authenticated" on public.%I for all to authenticated using (true) with check (true);', t);
-    execute format('drop policy if exists "allow_all_anon" on public.%I;', t);
-    execute format('create policy "allow_all_anon" on public.%I for all to anon using (true) with check (true);', t);
-  end loop;
-end $$;
+alter table public.profiles enable row level security;
+drop policy if exists "allow_all_authenticated" on public.profiles;
+create policy "allow_all_authenticated" on public.profiles for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.profiles;
+create policy "allow_all_anon" on public.profiles for all to anon using (true) with check (true);
+
+alter table public.projects enable row level security;
+drop policy if exists "allow_all_authenticated" on public.projects;
+create policy "allow_all_authenticated" on public.projects for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.projects;
+create policy "allow_all_anon" on public.projects for all to anon using (true) with check (true);
+
+alter table public.unit_snapshots enable row level security;
+drop policy if exists "allow_all_authenticated" on public.unit_snapshots;
+create policy "allow_all_authenticated" on public.unit_snapshots for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.unit_snapshots;
+create policy "allow_all_anon" on public.unit_snapshots for all to anon using (true) with check (true);
+
+alter table public.kos_snapshots enable row level security;
+drop policy if exists "allow_all_authenticated" on public.kos_snapshots;
+create policy "allow_all_authenticated" on public.kos_snapshots for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.kos_snapshots;
+create policy "allow_all_anon" on public.kos_snapshots for all to anon using (true) with check (true);
+
+alter table public.channels enable row level security;
+drop policy if exists "allow_all_authenticated" on public.channels;
+create policy "allow_all_authenticated" on public.channels for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.channels;
+create policy "allow_all_anon" on public.channels for all to anon using (true) with check (true);
+
+alter table public.channel_insights enable row level security;
+drop policy if exists "allow_all_authenticated" on public.channel_insights;
+create policy "allow_all_authenticated" on public.channel_insights for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.channel_insights;
+create policy "allow_all_anon" on public.channel_insights for all to anon using (true) with check (true);
+
+alter table public.daily_activities enable row level security;
+drop policy if exists "allow_all_authenticated" on public.daily_activities;
+create policy "allow_all_authenticated" on public.daily_activities for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.daily_activities;
+create policy "allow_all_anon" on public.daily_activities for all to anon using (true) with check (true);
+
+alter table public.marketing_plans enable row level security;
+drop policy if exists "allow_all_authenticated" on public.marketing_plans;
+create policy "allow_all_authenticated" on public.marketing_plans for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.marketing_plans;
+create policy "allow_all_anon" on public.marketing_plans for all to anon using (true) with check (true);
+
+alter table public.plan_items enable row level security;
+drop policy if exists "allow_all_authenticated" on public.plan_items;
+create policy "allow_all_authenticated" on public.plan_items for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.plan_items;
+create policy "allow_all_anon" on public.plan_items for all to anon using (true) with check (true);
+
+alter table public.evaluations enable row level security;
+drop policy if exists "allow_all_authenticated" on public.evaluations;
+create policy "allow_all_authenticated" on public.evaluations for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.evaluations;
+create policy "allow_all_anon" on public.evaluations for all to anon using (true) with check (true);
+
+alter table public.evaluation_items enable row level security;
+drop policy if exists "allow_all_authenticated" on public.evaluation_items;
+create policy "allow_all_authenticated" on public.evaluation_items for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.evaluation_items;
+create policy "allow_all_anon" on public.evaluation_items for all to anon using (true) with check (true);
+
+alter table public.content_items enable row level security;
+drop policy if exists "allow_all_authenticated" on public.content_items;
+create policy "allow_all_authenticated" on public.content_items for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.content_items;
+create policy "allow_all_anon" on public.content_items for all to anon using (true) with check (true);
+
+alter table public.events enable row level security;
+drop policy if exists "allow_all_authenticated" on public.events;
+create policy "allow_all_authenticated" on public.events for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.events;
+create policy "allow_all_anon" on public.events for all to anon using (true) with check (true);
+
+alter table public.sales_support_requests enable row level security;
+drop policy if exists "allow_all_authenticated" on public.sales_support_requests;
+create policy "allow_all_authenticated" on public.sales_support_requests for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.sales_support_requests;
+create policy "allow_all_anon" on public.sales_support_requests for all to anon using (true) with check (true);
+
+alter table public.sosialisasi_assists enable row level security;
+drop policy if exists "allow_all_authenticated" on public.sosialisasi_assists;
+create policy "allow_all_authenticated" on public.sosialisasi_assists for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.sosialisasi_assists;
+create policy "allow_all_anon" on public.sosialisasi_assists for all to anon using (true) with check (true);
+
+alter table public.marketing_props enable row level security;
+drop policy if exists "allow_all_authenticated" on public.marketing_props;
+create policy "allow_all_authenticated" on public.marketing_props for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.marketing_props;
+create policy "allow_all_anon" on public.marketing_props for all to anon using (true) with check (true);
+
+alter table public.report_runs enable row level security;
+drop policy if exists "allow_all_authenticated" on public.report_runs;
+create policy "allow_all_authenticated" on public.report_runs for all to authenticated using (true) with check (true);
+drop policy if exists "allow_all_anon" on public.report_runs;
+create policy "allow_all_anon" on public.report_runs for all to anon using (true) with check (true);
 
 -- 9. NOTIFIKASI SUKSES
 select 'Setup Database Sedaya HQ Berhasil 100%! Seluruh tabel, data master, dan hak akses real-time telah aktif.' as status;
