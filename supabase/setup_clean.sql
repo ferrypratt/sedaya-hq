@@ -18,7 +18,7 @@ alter table if exists public.daily_activities add column if not exists leader_no
 insert into public.profiles (id, full_name, role, position, created_at, updated_at)
 values
   ('f1111111-1111-1111-1111-111111111111', 'Ferry Pratama', 'leader', 'Supervisor / Leader', now(), now()),
-  ('z2222222-2222-2222-2222-222222222222', 'Ziyad', 'officer', 'Sr. Branding Officer', now(), now())
+  ('e2222222-2222-2222-2222-222222222222', 'Ziyad', 'officer', 'Sr. Branding Officer', now(), now())
 on conflict (id) do update set
   full_name = excluded.full_name,
   role = excluded.role,

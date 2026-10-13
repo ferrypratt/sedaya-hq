@@ -40,7 +40,7 @@ Migrations are stored as clean SQL files in `/supabase/migrations`. Apply them i
 
 Invite-only access with Supabase Auth:
 - **Ferry Pratama** (`f1111111-1111-1111-1111-111111111111`): Leader / Supervisor (Full access to all data, master settings, and leader evaluations).
-- **Ziyad** (`z2222222-2222-2222-2222-222222222222`): Senior Branding Officer.
+- **Ziyad** (`e2222222-2222-2222-2222-222222222222`): Senior Branding Officer.
 
 To promote an account to Leader in Supabase SQL editor:
 ```sql
