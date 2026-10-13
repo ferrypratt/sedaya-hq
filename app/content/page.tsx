@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/ui/page-header';
+import { Modal } from '@/components/ui/modal';
 import { INITIAL_CONTENT_ITEMS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
 import {
@@ -12,12 +14,12 @@ import {
 } from '@/lib/types/database';
 import {
   CalendarDays,
-  PlusCircle,
+  Plus,
   LayoutGrid,
   List,
   Columns3,
   ExternalLink,
-  X,
+  Building2,
 } from 'lucide-react';
 
 const PILLAR_LABELS: Record<ContentPillar, string> = {
@@ -42,19 +44,19 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
   article: 'Artikel Web',
 };
 
-const KANBAN_COLUMNS: { status: ContentStatus; label: string; color: string }[] = [
-  { status: 'idea', label: 'Ide Konten', color: 'bg-warm-cream text-stone-gray' },
-  { status: 'in_production', label: 'Dalam Produksi', color: 'bg-amber-50 text-amber-900 border-amber-200' },
-  { status: 'review', label: 'Review Supervisor', color: 'bg-purple-50 text-purple-900 border-purple-200' },
-  { status: 'scheduled', label: 'Terjadwal', color: 'bg-sky-50 text-sky-900 border-sky-200' },
-  { status: 'published', label: 'Tayang (Published)', color: 'bg-emerald-50 text-emerald-900 border-emerald-200' },
+const KANBAN_COLUMNS: { status: ContentStatus; label: string; dotClass: string }[] = [
+  { status: 'idea', label: 'Ide Konten', dotClass: 'bg-ash-gray' },
+  { status: 'in_production', label: 'Dalam Produksi', dotClass: 'bg-ember-orange' },
+  { status: 'review', label: 'Review Supervisor', dotClass: 'bg-ink-black' },
+  { status: 'scheduled', label: 'Terjadwal', dotClass: 'bg-violet-pulse' },
+  { status: 'published', label: 'Tayang (Published)', dotClass: 'bg-forest' },
 ];
 
 export default function ContentCalendarPage() {
   const [items, setItems] = useState<ContentItem[]>(INITIAL_CONTENT_ITEMS);
   const [viewMode, setViewMode] = useState<'calendar' | 'week' | 'kanban'>('kanban');
 
-  // Filters
+  // Filters: PIC strictly limited to Semua PIC, Ferry, and Ziyad
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -84,7 +86,6 @@ export default function ContentCalendarPage() {
     return true;
   });
 
-  // Monthly summary stats
   const totalPlanned = items.length;
   const totalPublished = items.filter((i) => i.status === 'published').length;
   const totalScheduled = items.filter((i) => i.status === 'scheduled').length;
@@ -92,7 +93,8 @@ export default function ContentCalendarPage() {
 
   const handleCreateContent = (e: React.FormEvent) => {
     e.preventDefault();
-    const picObj = INITIAL_PROFILES.find((p) => p.id === formData.pic_id) || INITIAL_PROFILES[0];
+    const picObj =
+      INITIAL_PROFILES.find((p) => p.id === formData.pic_id) || INITIAL_PROFILES[0];
     const projObj = INITIAL_PROJECTS.find((p) => p.id === formData.project_id);
 
     const newItem: ContentItem = {
@@ -118,6 +120,20 @@ export default function ContentCalendarPage() {
 
     setItems([newItem, ...items]);
     setIsModalOpen(false);
+    setFormData({
+      title: '',
+      pillar: 'promo',
+      format: 'reel',
+      publish_date: '2026-10-15',
+      publish_time: '12:00',
+      project_id: INITIAL_PROJECTS[0].id,
+      pic_id: INITIAL_PROFILES[1].id,
+      status: 'idea',
+      brief: '',
+      caption: '',
+      post_url: '',
+      assets_url: '',
+    });
   };
 
   const handleUpdateStatus = (id: string, status: ContentStatus) => {
@@ -127,65 +143,83 @@ export default function ContentCalendarPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-sand-border">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warm-cream border border-sand-border text-xs text-stone-gray font-medium mb-1.5">
-              <CalendarDays className="w-3.5 h-3.5 text-ink-black" />
-              <span>Manajemen Distribusi Media</span>
+        <PageHeader
+          section="Editorial & Distribusi"
+          meta={<span className="metric-mono">{filteredItems.length} Konten</span>}
+          title="Kalender & Antrian Konten"
+          description="Kelola alur produksi Reels, Carousel edukasi KPR, liputan progres lapangan, serta penjadwalan publikasi lintas kanal."
+          actions={
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="btn-pill-primary"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Rencanakan Konten</span>
+            </button>
+          }
+        />
+
+        {/* Compact Editorial Pipeline Bar (Replacing generic 4-card strip) */}
+        <section className="card-cream p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ash-gray block">
+                Total Direncanakan
+              </span>
+              <span className="metric-mono text-xl font-bold text-ink-black">
+                {totalPlanned}
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink-black">
-              Kalender Konten & Editorial
-            </h1>
-            <p className="text-sm text-stone-gray">
-              Atur jadwal penerbitan Instagram Reels, Carousel, promo proyek, dan pipeline produksi.
-            </p>
+            <div className="h-8 w-px bg-sand-border hidden sm:block" />
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-forest block">
+                Sudah Tayang
+              </span>
+              <span className="metric-mono text-xl font-bold text-forest">
+                {totalPublished}
+              </span>
+            </div>
+            <div className="h-8 w-px bg-sand-border hidden sm:block" />
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-violet-pulse block">
+                Terjadwal
+              </span>
+              <span className="metric-mono text-xl font-bold text-violet-pulse">
+                {totalScheduled}
+              </span>
+            </div>
+            <div className="h-8 w-px bg-sand-border hidden sm:block" />
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ember-orange block">
+                Dalam Produksi
+              </span>
+              <span className="metric-mono text-xl font-bold text-ember-orange">
+                {totalInProgress}
+              </span>
+            </div>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn-pill-primary text-xs sm:text-sm inline-flex items-center gap-2 self-start sm:self-auto"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ Rencanakan Konten</span>
-          </button>
-        </div>
-
-        {/* Monthly Summary Strip (Strict Requirement) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-4 rounded-2xl bg-paper-white border border-sand-border text-center">
-            <span className="text-[10px] font-bold uppercase text-ash-gray block">Rencana Bulan Ini</span>
-            <span className="text-2xl font-bold text-ink-black mt-1 block">{totalPlanned} Konten</span>
-            <span className="text-[11px] text-stone-gray">Total di kalender</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center text-emerald-900">
-            <span className="text-[10px] font-bold uppercase block text-emerald-700">Sudah Tayang</span>
-            <span className="text-2xl font-bold mt-1 block">{totalPublished} Konten</span>
-            <span className="text-[11px] text-emerald-700">
-              {Math.round((totalPublished / (totalPlanned || 1)) * 100)}% terealisasi
-            </span>
-          </div>
-          <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-center text-sky-900">
-            <span className="text-[10px] font-bold uppercase block text-sky-700">Terjadwal Tayang</span>
-            <span className="text-2xl font-bold mt-1 block">{totalScheduled} Konten</span>
-            <span className="text-[11px] text-sky-700">Siap diposting</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center text-amber-900">
-            <span className="text-[10px] font-bold uppercase block text-amber-700">Proses Produksi</span>
-            <span className="text-2xl font-bold mt-1 block">{totalInProgress} Konten</span>
-            <span className="text-[11px] text-amber-700">Desain & Video</span>
-          </div>
-        </div>
+          <span className="metric-mono text-xs font-semibold text-stone-gray bg-paper-white px-3 py-1.5 rounded-full border border-sand-border">
+            Realisasi Tayang:{' '}
+            <strong className="text-ink-black">
+              {totalPlanned > 0
+                ? Math.round((totalPublished / totalPlanned) * 100)
+                : 0}
+              %
+            </strong>
+          </span>
+        </section>
 
         {/* Control & View Toggle Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-2xl bg-warm-cream border border-sand-border">
-          {/* View Mode Switcher */}
-          <div className="flex items-center gap-1 p-1 bg-paper-white border border-sand-border rounded-full">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3 rounded-2xl bg-warm-cream border border-sand-border">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-paper-white border border-sand-border rounded-full self-start">
             <button
+              type="button"
               onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 viewMode === 'kanban'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
+                  ? 'bg-ink-black text-paper-white'
                   : 'text-stone-gray hover:text-ink-black'
               }`}
             >
@@ -193,21 +227,23 @@ export default function ContentCalendarPage() {
               <span>Papan Kanban</span>
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('week')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 viewMode === 'week'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
+                  ? 'bg-ink-black text-paper-white'
                   : 'text-stone-gray hover:text-ink-black'
               }`}
             >
               <List className="w-3.5 h-3.5" />
-              <span>Daftar Mingguan</span>
+              <span>Daftar Tabel</span>
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('calendar')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 viewMode === 'calendar'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
+                  ? 'bg-ink-black text-paper-white'
                   : 'text-stone-gray hover:text-ink-black'
               }`}
             >
@@ -216,12 +252,13 @@ export default function ContentCalendarPage() {
             </button>
           </div>
 
-          {/* PIC Filter: Ferry, Ziyad, All */}
+          {/* PIC Filter strictly: Semua PIC, Ferry, Ziyad */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 p-1 bg-paper-white border border-sand-border rounded-full">
               <button
+                type="button"
                 onClick={() => setPicFilter('all')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-3 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
                   picFilter === 'all'
                     ? 'bg-ink-black text-paper-white'
                     : 'text-stone-gray hover:text-ink-black'
@@ -230,8 +267,9 @@ export default function ContentCalendarPage() {
                 Semua PIC
               </button>
               <button
+                type="button"
                 onClick={() => setPicFilter('ferry')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-3 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
                   picFilter === 'ferry'
                     ? 'bg-ink-black text-paper-white'
                     : 'text-stone-gray hover:text-ink-black'
@@ -240,8 +278,9 @@ export default function ContentCalendarPage() {
                 Ferry
               </button>
               <button
+                type="button"
                 onClick={() => setPicFilter('ziyad')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-3 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
                   picFilter === 'ziyad'
                     ? 'bg-ink-black text-paper-white'
                     : 'text-stone-gray hover:text-ink-black'
@@ -252,9 +291,10 @@ export default function ContentCalendarPage() {
             </div>
 
             <select
+              aria-label="Filter Proyek"
               value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
-              className="px-2.5 py-1 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-stone-gray"
+              className="px-3.5 py-2 min-h-10 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black"
             >
               <option value="all">Semua Proyek</option>
               {INITIAL_PROJECTS.map((p) => (
@@ -265,9 +305,10 @@ export default function ContentCalendarPage() {
             </select>
 
             <select
+              aria-label="Filter Status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-2.5 py-1 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-stone-gray"
+              className="px-3.5 py-2 min-h-10 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black"
             >
               <option value="all">Semua Status</option>
               <option value="idea">Ide</option>
@@ -279,120 +320,210 @@ export default function ContentCalendarPage() {
           </div>
         </div>
 
-        {/* View 1: Papan Kanban by Status */}
+        {/* View 1: Kanban Board */}
         {viewMode === 'kanban' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3.5 overflow-x-auto pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3.5 pb-4">
             {KANBAN_COLUMNS.map((col) => {
-              const colItems = filteredItems.filter((i) => i.status === col.status);
+              const colItems = filteredItems.filter(
+                (i) => i.status === col.status
+              );
               return (
-                <div
+                <section
                   key={col.status}
-                  className="bg-warm-cream/50 border border-sand-border rounded-[22px] p-3 flex flex-col min-w-[240px]"
+                  className="bg-warm-cream border border-sand-border rounded-2xl p-3 flex flex-col min-h-[260px]"
                 >
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-sand-border">
-                    <span className="font-bold text-xs text-ink-black">{col.label}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-paper-white border border-sand-border text-stone-gray">
+                  <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-sand-border">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${col.dotClass}`} />
+                      <h2 className="font-bold text-xs text-ink-black">
+                        {col.label}
+                      </h2>
+                    </div>
+                    <span className="metric-mono px-2 py-0.5 rounded-full text-[11px] font-bold bg-paper-white border border-sand-border text-stone-gray">
                       {colItems.length}
                     </span>
                   </div>
 
-                  <div className="space-y-2.5 flex-1">
-                    {colItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="p-3.5 rounded-xl bg-paper-white border border-sand-border hover:border-ink-black transition space-y-2 text-xs"
-                      >
-                        <div className="flex items-center justify-between gap-1 text-[10px]">
-                          <span className="font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                            {FORMAT_LABELS[item.format]}
-                          </span>
-                          <span className="text-stone-gray">{item.publish_date}</span>
-                        </div>
+                  {colItems.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center p-4 text-center">
+                      <p className="text-[11px] text-ash-gray">
+                        Kosong pada tahap ini
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 flex-1">
+                      {colItems.map((item) => (
+                        <article
+                          key={item.id}
+                          className="p-3.5 rounded-xl bg-paper-white border border-sand-border hover:border-ink-black transition-colors space-y-2 text-xs"
+                        >
+                          <div className="flex items-center justify-between gap-1 text-[10px]">
+                            <span className="font-bold uppercase tracking-[0.04em] text-ink-black bg-warm-cream px-2 py-0.5 rounded border border-sand-border">
+                              {FORMAT_LABELS[item.format]}
+                            </span>
+                            <span className="metric-mono text-stone-gray">
+                              {item.publish_date}
+                            </span>
+                          </div>
 
-                        <h4 className="font-bold text-xs text-ink-black leading-snug">{item.title}</h4>
+                          <h3 className="font-bold text-xs text-ink-black leading-snug">
+                            {item.title}
+                          </h3>
 
-                        {item.project && (
-                          <span className="text-[10px] text-stone-gray block">
-                            📍 {item.project.name}
-                          </span>
-                        )}
+                          {item.project && (
+                            <span className="text-[11px] text-stone-gray inline-flex items-center gap-1">
+                              <Building2 className="w-3 h-3 text-ash-gray" />
+                              <span className="truncate">{item.project.name}</span>
+                            </span>
+                          )}
 
-                        <div className="pt-2 border-t border-cool-mist flex items-center justify-between text-[10px] text-stone-gray">
-                          <span>PIC: {item.pic?.full_name}</span>
-                          <select
-                            value={item.status}
-                            onChange={(e) =>
-                              handleUpdateStatus(item.id, e.target.value as ContentStatus)
-                            }
-                            className="text-[10px] bg-warm-cream border border-sand-border rounded px-1 py-0.5"
-                          >
-                            <option value="idea">Ide</option>
-                            <option value="in_production">Produksi</option>
-                            <option value="review">Review</option>
-                            <option value="scheduled">Jadwal</option>
-                            <option value="published">Tayang</option>
-                          </select>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                          <div className="pt-2 border-t border-sand-border flex items-center justify-between gap-2 text-[11px] text-stone-gray">
+                            <span className="truncate font-medium">
+                              {item.pic?.full_name}
+                            </span>
+                            <select
+                              aria-label={`Ubah status ${item.title}`}
+                              value={item.status}
+                              onChange={(e) =>
+                                handleUpdateStatus(
+                                  item.id,
+                                  e.target.value as ContentStatus
+                                )
+                              }
+                              className="text-[11px] font-semibold bg-warm-cream border border-sand-border rounded-md px-1.5 py-1 text-ink-black"
+                            >
+                              <option value="idea">Ide</option>
+                              <option value="in_production">Produksi</option>
+                              <option value="review">Review</option>
+                              <option value="scheduled">Jadwal</option>
+                              <option value="published">Tayang</option>
+                            </select>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
               );
             })}
           </div>
         )}
 
-        {/* View 2: Daftar Mingguan */}
+        {/* View 2: Table / List View */}
         {viewMode === 'week' && (
-          <div className="space-y-3">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-2xl bg-paper-white border border-sand-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900">
-                      {item.status.toUpperCase()}
-                    </span>
-                    <span className="font-semibold text-stone-gray">
-                      📅 {item.publish_date} {item.publish_time && `• ${item.publish_time}`}
-                    </span>
-                    <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-[10px]">
-                      {FORMAT_LABELS[item.format]}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-sm text-ink-black">{item.title}</h3>
-                  <p className="text-stone-gray line-clamp-1">{item.caption || item.brief}</p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-ink-black">{item.pic?.full_name}</span>
-                  {item.post_url && (
-                    <a
-                      href={item.post_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg border border-sand-border text-stone-gray hover:text-ink-black"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
+          <section className="card-clay p-0 overflow-hidden">
+            {filteredItems.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <CalendarDays className="w-8 h-8 text-ash-gray mx-auto" />
+                <p className="text-sm font-bold text-ink-black">
+                  Belum ada item konten yang tercatat
+                </p>
+                <p className="text-xs text-stone-gray">
+                  Tambahkan rencana konten baru menggunakan tombol di kanan atas.
+                </p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-sand-border bg-warm-cream text-[11px] font-semibold uppercase tracking-[0.05em] text-ash-gray">
+                      <th className="py-3.5 px-5">Jadwal Tayang</th>
+                      <th className="py-3.5 px-4">Judul & Konsep</th>
+                      <th className="py-3.5 px-4">Format</th>
+                      <th className="py-3.5 px-4">Proyek</th>
+                      <th className="py-3.5 px-4">PIC</th>
+                      <th className="py-3.5 px-5 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-sand-border">
+                    {filteredItems.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-warm-cream/50 transition-colors"
+                      >
+                        <td className="py-3.5 px-5 metric-mono font-semibold text-ink-black whitespace-nowrap">
+                          {item.publish_date}{' '}
+                          {item.publish_time && (
+                            <span className="text-stone-gray font-normal">
+                              ({item.publish_time})
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-ink-black block">
+                            {item.title}
+                          </span>
+                          {(item.caption || item.brief) && (
+                            <span className="text-[11px] text-stone-gray line-clamp-1">
+                              {item.caption || item.brief}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded bg-warm-cream border border-sand-border font-semibold text-ink-black">
+                            {FORMAT_LABELS[item.format]}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-stone-gray">
+                          {item.project?.name || 'Korporat'}
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-ink-black">
+                          {item.pic?.full_name}
+                        </td>
+                        <td className="py-3.5 px-5 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <select
+                              aria-label={`Status ${item.title}`}
+                              value={item.status}
+                              onChange={(e) =>
+                                handleUpdateStatus(
+                                  item.id,
+                                  e.target.value as ContentStatus
+                                )
+                              }
+                              className="py-1 px-2 rounded-lg border border-sand-border bg-warm-cream text-xs font-semibold text-ink-black"
+                            >
+                              <option value="idea">Ide</option>
+                              <option value="in_production">Produksi</option>
+                              <option value="review">Review</option>
+                              <option value="scheduled">Terjadwal</option>
+                              <option value="published">Tayang</option>
+                            </select>
+                            {item.post_url && (
+                              <a
+                                href={item.post_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label="Buka tautan konten"
+                                className="p-1.5 rounded-lg border border-sand-border text-stone-gray hover:text-ink-black"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         )}
 
-        {/* View 3: Kalender Bulanan Grid */}
+        {/* View 3: Monthly Calendar Grid */}
         {viewMode === 'calendar' && (
-          <div className="p-6 rounded-[24px] bg-paper-white border border-sand-border space-y-4">
-            <div className="flex justify-between items-center text-sm font-bold text-ink-black">
-              <span>Oktober 2026</span>
-              <span className="text-xs text-stone-gray font-normal">Minggu ke-42 & 43</span>
+          <section className="card-clay p-5 sm:p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-base font-bold text-ink-black">
+                Oktober 2026
+              </h2>
+              <span className="text-xs text-stone-gray font-medium">
+                Kalender Distribusi Konten
+              </span>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-xs border-b border-sand-border pb-2 text-stone-gray font-semibold">
+            <div className="grid grid-cols-7 gap-1.5 text-center text-xs border-b border-sand-border pb-2 text-stone-gray font-semibold">
               <span>Sen</span>
               <span>Sel</span>
               <span>Rab</span>
@@ -402,23 +533,25 @@ export default function ContentCalendarPage() {
               <span>Min</span>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-xs min-h-[300px]">
+            <div className="grid grid-cols-7 gap-1.5 text-xs">
               {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
                 const dateStr = `2026-10-${day < 10 ? `0${day}` : day}`;
-                const dayItems = filteredItems.filter((i) => i.publish_date === dateStr);
+                const dayItems = filteredItems.filter(
+                  (i) => i.publish_date === dateStr
+                );
                 return (
                   <div
                     key={day}
-                    className="p-1.5 rounded-xl border border-cool-mist min-h-[70px] flex flex-col justify-between hover:bg-warm-cream/50 transition"
+                    className="p-2 rounded-xl border border-sand-border min-h-[76px] flex flex-col justify-between bg-paper-white hover:bg-warm-cream transition-colors"
                   >
-                    <span className="font-bold text-[11px] text-ink-black text-right block">
+                    <span className="metric-mono font-bold text-[11px] text-stone-gray text-right block">
                       {day}
                     </span>
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       {dayItems.map((di) => (
                         <div
                           key={di.id}
-                          className="px-1 py-0.5 rounded text-[9px] font-semibold bg-violet-pulse/10 text-violet-pulse truncate"
+                          className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-ink-black text-paper-white truncate"
                           title={di.title}
                         >
                           {di.title}
@@ -429,163 +562,191 @@ export default function ContentCalendarPage() {
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Modal: Tambah Konten */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-paper-white border border-sand-border rounded-[28px] max-w-lg w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-sand-border mb-4">
-                <h3 className="font-bold text-base text-ink-black">Rencanakan Konten Baru</h3>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-1 rounded-full text-stone-gray hover:text-ink-black"
+        {/* Modal: Rencanakan Konten */}
+        <Modal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Rencanakan Konten Baru"
+          subtitle="Tambahkan ide atau jadwal produksi konten ke kalender editorial."
+        >
+          <form onSubmit={handleCreateContent} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Judul / Hook Konten *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Contoh: Edukasi Syarat KPR Subsidi & Update Lapangan"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Format Konten
+                </label>
+                <select
+                  value={formData.format}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      format: e.target.value as ContentFormat,
+                    })
+                  }
+                  className="input-clay text-xs font-semibold"
                 >
-                  <X className="w-5 h-5" />
-                </button>
+                  {Object.entries(FORMAT_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <form onSubmit={handleCreateContent} className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-semibold text-stone-gray mb-1">Judul / Hook Konten *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Rumah Murah Cicilan 1 Juta Dekat Bandara"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-cool-mist text-sm font-medium focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-semibold text-stone-gray mb-1">Format Konten</label>
-                    <select
-                      value={formData.format}
-                      onChange={(e) =>
-                        setFormData({ ...formData, format: e.target.value as ContentFormat })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold"
-                    >
-                      {Object.entries(FORMAT_LABELS).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-stone-gray mb-1">Pilar Konten</label>
-                    <select
-                      value={formData.pillar}
-                      onChange={(e) =>
-                        setFormData({ ...formData, pillar: e.target.value as ContentPillar })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold"
-                    >
-                      {Object.entries(PILLAR_LABELS).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-semibold text-stone-gray mb-1">Tanggal Rencana Tayang</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.publish_date}
-                      onChange={(e) => setFormData({ ...formData, publish_date: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-stone-gray mb-1">Jam Tayang (WIB)</label>
-                    <input
-                      type="time"
-                      value={formData.publish_time}
-                      onChange={(e) => setFormData({ ...formData, publish_time: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-semibold text-stone-gray mb-1">Proyek Terkait</label>
-                    <select
-                      value={formData.project_id}
-                      onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold"
-                    >
-                      {INITIAL_PROJECTS.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-stone-gray mb-1">PIC Pembuat</label>
-                    <select
-                      value={formData.pic_id}
-                      onChange={(e) => setFormData({ ...formData, pic_id: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold"
-                    >
-                      <option value={INITIAL_PROFILES[0].id}>Ferry (Leader)</option>
-                      <option value={INITIAL_PROFILES[1].id}>Ziyad (Sr. Branding)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-stone-gray mb-1">Brief / Ide Konsep</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Instruksi pengambilan video atau angle foto..."
-                    value={formData.brief}
-                    onChange={(e) => setFormData({ ...formData, brief: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-stone-gray mb-1">Caption / Teks Postingan</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Tulis caption medsos lengkap dengan hashtag..."
-                    value={formData.caption}
-                    onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div className="pt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-full border border-sand-border font-semibold text-stone-gray"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 rounded-full bg-ink-black text-paper-white font-semibold hover:opacity-90"
-                  >
-                    Simpan ke Kalender
-                  </button>
-                </div>
-              </form>
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Pilar Konten
+                </label>
+                <select
+                  value={formData.pillar}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      pillar: e.target.value as ContentPillar,
+                    })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  {Object.entries(PILLAR_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
-        )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Tanggal Rencana Tayang
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.publish_date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, publish_date: e.target.value })
+                  }
+                  className="input-clay metric-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Jam Tayang (WIB)
+                </label>
+                <input
+                  type="time"
+                  value={formData.publish_time}
+                  onChange={(e) =>
+                    setFormData({ ...formData, publish_time: e.target.value })
+                  }
+                  className="input-clay metric-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Proyek Terkait
+                </label>
+                <select
+                  value={formData.project_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, project_id: e.target.value })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  {INITIAL_PROJECTS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  PIC Pembuat
+                </label>
+                <select
+                  value={formData.pic_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pic_id: e.target.value })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  <option value={INITIAL_PROFILES[0].id}>Ferry (Leader)</option>
+                  <option value={INITIAL_PROFILES[1].id}>
+                    Ziyad (Sr. Branding)
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Brief / Ide Konsep
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Arahan visual, sudut pengambilan gambar, atau pesan utama..."
+                value={formData.brief}
+                onChange={(e) =>
+                  setFormData({ ...formData, brief: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Draft Caption
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Teks caption dan informasi kontak..."
+                value={formData.caption}
+                onChange={(e) =>
+                  setFormData({ ...formData, caption: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div className="pt-3 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="btn-pill-ghost"
+              >
+                Batal
+              </button>
+              <button type="submit" className="btn-pill-primary">
+                Simpan ke Kalender
+              </button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </AppShell>
   );

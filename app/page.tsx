@@ -1,7 +1,9 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   INITIAL_PROJECTS,
   INITIAL_UNIT_SNAPSHOTS,
@@ -19,12 +21,12 @@ import {
   Target,
   Share2,
   ArrowRight,
-  TrendingUp,
   AlertTriangle,
   CheckCircle2,
   Globe,
   MapPin,
   FileText,
+  Plus,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -32,25 +34,89 @@ export default function DashboardPage() {
     (p) => p.kind === 'active_project'
   );
 
+  // Portfolio inventory aggregation
+  const projectRows = activeHousingProjects.map((project) => {
+    const snapshots = INITIAL_UNIT_SNAPSHOTS[project.id] || [];
+    const latest = snapshots[0];
+    const belumTerjual = latest?.belum_terjual ?? 0;
+    const booking = latest?.booking ?? 0;
+    const sp3k = latest?.sp3k ?? 0;
+    const akad = latest?.akad_kredit ?? 0;
+    const cash = latest?.cash_keras ?? 0;
+    const hold = latest?.hold_manajemen ?? 0;
+
+    const totalAllocated = belumTerjual + booking + sp3k + akad + cash + hold;
+    const unallocated = project.total_units - totalAllocated;
+    const soldTotal = akad + cash;
+    const pipelineTotal = booking + sp3k;
+
+    return {
+      project,
+      belumTerjual,
+      booking,
+      sp3k,
+      akad,
+      cash,
+      hold,
+      totalAllocated,
+      unallocated,
+      soldTotal,
+      pipelineTotal,
+    };
+  });
+
+  const portfolioTotals = projectRows.reduce(
+    (acc, row) => {
+      acc.totalUnits += row.project.total_units;
+      acc.sold += row.soldTotal;
+      acc.pipeline += row.pipelineTotal;
+      acc.available += row.belumTerjual;
+      acc.hold += row.hold;
+      acc.unallocated += row.unallocated;
+      return acc;
+    },
+    { totalUnits: 0, sold: 0, pipeline: 0, available: 0, hold: 0, unallocated: 0 }
+  );
+
+  const soldPct =
+    portfolioTotals.totalUnits > 0
+      ? Math.round((portfolioTotals.sold / portfolioTotals.totalUnits) * 100)
+      : 0;
+  const pipelinePct =
+    portfolioTotals.totalUnits > 0
+      ? Math.round((portfolioTotals.pipeline / portfolioTotals.totalUnits) * 100)
+      : 0;
+  const availablePct =
+    portfolioTotals.totalUnits > 0
+      ? Math.round((portfolioTotals.available / portfolioTotals.totalUnits) * 100)
+      : 0;
+
   // Active weekly plan
-  const activePlan = INITIAL_MARKETING_PLANS.find(
-    (p) => p.period_type === 'weekly' && p.status === 'active'
-  ) || INITIAL_MARKETING_PLANS[0];
+  const activePlan =
+    INITIAL_MARKETING_PLANS.find(
+      (p) => p.period_type === 'weekly' && p.status === 'active'
+    ) || INITIAL_MARKETING_PLANS[0];
 
   const planItems = activePlan?.items || [];
   const completedPlanItems = planItems.filter((i) => i.status === 'done').length;
   const planProgressPct =
-    planItems.length > 0 ? Math.round((completedPlanItems / planItems.length) * 100) : 0;
+    planItems.length > 0
+      ? Math.round((completedPlanItems / planItems.length) * 100)
+      : 0;
 
   // Activities for today
   const todayActivities = INITIAL_ACTIVITIES;
-  const activitiesByFerry = todayActivities.filter((a) => a.pic?.full_name.includes('Ferry'));
-  const activitiesByZiyad = todayActivities.filter((a) => a.pic?.full_name.includes('Ziyad'));
+  const activitiesByFerry = todayActivities.filter((a) =>
+    a.pic?.full_name.includes('Ferry')
+  );
+  const activitiesByZiyad = todayActivities.filter((a) =>
+    a.pic?.full_name.includes('Ziyad')
+  );
 
   // Content due this week
   const upcomingContent = INITIAL_CONTENT_ITEMS.slice(0, 4);
 
-  // Quick 7d metrics
+  // 7d channel metrics (computed strictly from actual seed snapshot values, zero fabricated deltas)
   const get7dMetric = (channelId: string, metricKey: string) => {
     return (
       INITIAL_CHANNEL_INSIGHTS.find(
@@ -68,486 +134,576 @@ export default function DashboardPage() {
   const mapsViews = get7dMetric('22222222-2222-2222-2222-222222222213', 'profile_views');
   const tiktokViews = get7dMetric('22222222-2222-2222-2222-222222222212', 'video_views');
 
+  const todayFormatted = useSyncExternalStore(
+    () => () => {},
+    () =>
+      new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date()),
+    () => 'Oktober 2026'
+  );
+
   return (
     <AppShell>
-      <div className="space-y-6 max-w-7xl mx-auto pb-12">
-        {/* Top Header Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-sand-border">
-          <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-warm-cream border border-sand-border text-xs text-stone-gray font-medium mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Sistem Operasional Aktif • Medan & Deli Serdang</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink-black">
-              Dashboard Operasional
-            </h1>
-            <p className="text-xs sm:text-sm text-stone-gray mt-0.5">
-              Divisi Branding, Marketing & Research — PT Sedaya Property
-            </p>
-          </div>
+      <div className="space-y-8">
+        <PageHeader
+          section="Komando Eksekutif"
+          meta={<span>Medan & Deli Serdang</span>}
+          title="Ikhtisar Operasional"
+          description="Pantauan rekonsiliasi stok unit perumahan, performa kanal digital, dan progres kerja harian tim pemasaran PT Sedaya Property."
+          actions={
+            <>
+              <Link href="/reports" className="btn-pill-ghost">
+                <FileText className="w-3.5 h-3.5 text-stone-gray" />
+                <span>Cetak Laporan</span>
+              </Link>
+              <Link href="/activities" className="btn-pill-primary">
+                <Plus className="w-3.5 h-3.5" />
+                <span>Catat Aktivitas</span>
+              </Link>
+            </>
+          }
+        />
 
-          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-            <Link
-              href="/activities"
-              className="px-4 py-2 text-xs font-semibold text-paper-white bg-ink-black rounded-full hover:bg-stone-800 transition-colors shadow-xs inline-flex items-center gap-1.5"
-            >
-              <CalendarCheck className="w-3.5 h-3.5" />
-              <span>+ Catat Aktivitas</span>
-            </Link>
-            <Link
-              href="/reports"
-              className="px-4 py-2 text-xs font-semibold text-ink-black bg-paper-white border border-sand-border rounded-full hover:bg-stone-50 transition-colors shadow-xs inline-flex items-center gap-1.5"
-            >
-              <FileText className="w-3.5 h-3.5 text-violet-pulse" />
-              <span>Generate Laporan</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Attention Alert Banner (Unallocated warning for Samudera Residence) */}
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-start gap-3 shadow-xs">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs text-amber-950">
-            <span className="font-extrabold text-sm block mb-0.5">
-              Pemberitahuan Rekonsiliasi Inventaris:
-            </span>
-            <span>
-              Terdapat <strong>3 unit belum teralokasi (Unallocated)</strong> pada proyek{' '}
-              <strong>Samudera Residence</strong> (Total: 61 unit, Tercatat snapshot: 58 unit). Mohon lakukan rekonsiliasi data master dengan tim legal / administrasi bank BTN.
-            </span>
-          </div>
-          <Link
-            href="/projects/samudera-residence"
-            className="px-3 py-1 text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 rounded-full shrink-0"
-          >
-            Buka Proyek
-          </Link>
-        </div>
-
-        {/* 7d Digital Highlights Row */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-extrabold text-ink-black tracking-tight flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-violet-pulse" />
-              <span>Highlight Performa Saluran Digital (7 Hari Terakhir)</span>
-            </h2>
-            <Link
-              href="/channels"
-              className="text-xs font-semibold text-stone-gray hover:text-ink-black flex items-center gap-1"
-            >
-              <span>Lihat Semua Saluran</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-paper-white border border-sand-border rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
-                <span className="font-semibold uppercase tracking-wider">IG Sevilla Reach</span>
-                <div className="p-1 rounded-md bg-pink-50 text-pink-600">
-                  <InstagramIcon className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-ink-black font-mono">
-                {sevillaReach.toLocaleString('id-ID')}
-              </div>
-              <div className="mt-1 text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" />
-                <span>+21.4% vs mgg lalu</span>
-              </div>
-            </div>
-
-            <div className="bg-paper-white border border-sand-border rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
-                <span className="font-semibold uppercase tracking-wider">Web Portal Sessions</span>
-                <div className="p-1 rounded-md bg-blue-50 text-blue-600">
-                  <Globe className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-ink-black font-mono">
-                {webSessions.toLocaleString('id-ID')}
-              </div>
-              <div className="mt-1 text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" />
-                <span>+14.8% vs mgg lalu</span>
-              </div>
-            </div>
-
-            <div className="bg-paper-white border border-sand-border rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
-                <span className="font-semibold uppercase tracking-wider">Maps Office Views</span>
-                <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
-                  <MapPin className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-ink-black font-mono">
-                {mapsViews.toLocaleString('id-ID')}
-              </div>
-              <div className="mt-1 text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" />
-                <span>+13.6% vs mgg lalu</span>
-              </div>
-            </div>
-
-            <div className="bg-paper-white border border-sand-border rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
-                <span className="font-semibold uppercase tracking-wider">TikTok Video Views</span>
-                <div className="p-1 rounded-md bg-stone-100 text-ink-black">
-                  <TikTokIcon className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="text-2xl font-black text-ink-black font-mono">
-                {tiktokViews.toLocaleString('id-ID')}
-              </div>
-              <div className="mt-1 text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" />
-                <span>+18.6% vs mgg lalu</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Project Unit Funnel Summary Strip */}
-        <div className="bg-paper-white border border-sand-border rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
+        {/* Section 1: Asymmetric Hero Workbench (8:4 Split) */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left 8 Cols: Portfolio Inventory & Reconciliation Matrix */}
+          <div className="lg:col-span-8 card-clay p-6 flex flex-col justify-between space-y-6">
             <div>
-              <h2 className="text-base font-extrabold text-ink-black tracking-tight flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-violet-pulse" />
-                <span>Ringkasan Funnel Stok Unit Perumahan Subsidi</span>
+              <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ash-gray block mb-1">
+                    Posisi Inventaris Portofolio (6 Proyek Perumahan)
+                  </span>
+                  <div className="flex items-baseline gap-3">
+                    <span className="metric-mono text-3xl sm:text-4xl font-bold text-ink-black">
+                      {portfolioTotals.totalUnits}
+                    </span>
+                    <span className="text-sm font-medium text-stone-gray">
+                      Total Unit Terdaftar
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href="/projects"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-pulse hover:underline"
+                >
+                  <span>Buka Modul Proyek</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              {/* Stacked Visual Allocation Bar */}
+              <div className="space-y-2">
+                <div className="h-3.5 w-full rounded-full bg-warm-cream border border-sand-border overflow-hidden flex">
+                  <div
+                    style={{ width: `${soldPct}%` }}
+                    className="bg-ink-black h-full"
+                    title={`Terjual (Akad + Cash): ${portfolioTotals.sold} unit`}
+                  />
+                  <div
+                    style={{ width: `${pipelinePct}%` }}
+                    className="bg-violet-pulse h-full"
+                    title={`Proses KPR (Booking + SP3K): ${portfolioTotals.pipeline} unit`}
+                  />
+                  <div
+                    style={{ width: `${availablePct}%` }}
+                    className="bg-sand-hover h-full"
+                    title={`Tersedia: ${portfolioTotals.available} unit`}
+                  />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div className="p-3 rounded-xl bg-warm-cream border border-sand-border">
+                    <div className="flex items-center gap-1.5 text-xs text-stone-gray mb-1">
+                      <span className="w-2 h-2 rounded-full bg-ink-black shrink-0" />
+                      <span>Terjual (Akad/Cash)</span>
+                    </div>
+                    <span className="metric-mono text-lg font-bold text-ink-black">
+                      {portfolioTotals.sold}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-warm-cream border border-sand-border">
+                    <div className="flex items-center gap-1.5 text-xs text-stone-gray mb-1">
+                      <span className="w-2 h-2 rounded-full bg-violet-pulse shrink-0" />
+                      <span>Proses (Book/SP3K)</span>
+                    </div>
+                    <span className="metric-mono text-lg font-bold text-ink-black">
+                      {portfolioTotals.pipeline}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-warm-cream border border-sand-border">
+                    <div className="flex items-center gap-1.5 text-xs text-stone-gray mb-1">
+                      <span className="w-2 h-2 rounded-full bg-sand-hover shrink-0" />
+                      <span>Stok Tersedia</span>
+                    </div>
+                    <span className="metric-mono text-lg font-bold text-ink-black">
+                      {portfolioTotals.available}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-ember-surface border border-ember-border">
+                    <div className="flex items-center gap-1.5 text-xs text-ember-orange font-semibold mb-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>Unallocated</span>
+                    </div>
+                    <span className="metric-mono text-lg font-bold text-ember-orange">
+                      {portfolioTotals.unallocated}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mandatory Samudera Residence Reconciliation Callout */}
+            {portfolioTotals.unallocated > 0 && (
+              <div className="p-4 rounded-xl bg-ember-surface border border-ember-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-ember-orange shrink-0 mt-0.5" />
+                  <div className="text-xs text-ink-black leading-relaxed">
+                    <strong className="font-bold text-ember-orange block sm:inline">
+                      Perhatian Rekonsiliasi Samudera Residence:{' '}
+                    </strong>
+                    <span>
+                      Terdapat <strong className="metric-mono font-bold">3 unit Unallocated</strong> (Total master: <span className="metric-mono font-semibold">61</span> unit, teralokasi pada snapshot: <span className="metric-mono font-semibold">58</span> unit). Lakukan verifikasi bersama administrasi KPR/Legal.
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href="/projects/samudera-residence"
+                  className="px-3.5 py-2 rounded-full bg-ink-black text-paper-white text-xs font-semibold hover:bg-slate-gray shrink-0 self-start sm:self-center"
+                >
+                  Rekonsiliasi Unit
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Right 4 Cols: 7-Day Digital Reach Ledger (Zero Fake Deltas) */}
+          <div className="lg:col-span-4 card-cream p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between gap-2 pb-4 border-b border-sand-border">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ash-gray block">
+                    Snapshot 7 Hari Terakhir
+                  </span>
+                  <h2 className="text-base font-bold text-ink-black mt-0.5">
+                    Performa Kanal Utama
+                  </h2>
+                </div>
+                <span className="metric-mono text-[11px] font-semibold px-2 py-0.5 rounded-md bg-paper-white border border-sand-border text-stone-gray">
+                  Periode 7H
+                </span>
+              </div>
+
+              <div className="divide-y divide-sand-border">
+                <div className="py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-paper-white border border-sand-border flex items-center justify-center text-ink-black shrink-0">
+                      <InstagramIcon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-ink-black block truncate">
+                        IG Grand Sevilia
+                      </span>
+                      <span className="text-[11px] text-stone-gray block">
+                        Jangkauan Akun (Reach)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="metric-mono text-base font-bold text-ink-black">
+                    {sevillaReach.toLocaleString('id-ID')}
+                  </span>
+                </div>
+
+                <div className="py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-paper-white border border-sand-border flex items-center justify-center text-ink-black shrink-0">
+                      <TikTokIcon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-ink-black block truncate">
+                        TikTok Grand Sevilia
+                      </span>
+                      <span className="text-[11px] text-stone-gray block">
+                        Tayangan Video (Views)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="metric-mono text-base font-bold text-ink-black">
+                    {tiktokViews.toLocaleString('id-ID')}
+                  </span>
+                </div>
+
+                <div className="py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-paper-white border border-sand-border flex items-center justify-center text-ink-black shrink-0">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-ink-black block truncate">
+                        Website Sedaya Group
+                      </span>
+                      <span className="text-[11px] text-stone-gray block">
+                        Sesi Kunjungan Aktif
+                      </span>
+                    </div>
+                  </div>
+                  <span className="metric-mono text-base font-bold text-ink-black">
+                    {webSessions.toLocaleString('id-ID')}
+                  </span>
+                </div>
+
+                <div className="py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-paper-white border border-sand-border flex items-center justify-center text-ink-black shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-ink-black block truncate">
+                        Google Maps Kantor
+                      </span>
+                      <span className="text-[11px] text-stone-gray block">
+                        Tayangan Profil Lokasi
+                      </span>
+                    </div>
+                  </div>
+                  <span className="metric-mono text-base font-bold text-ink-black">
+                    {mapsViews.toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-sand-border">
+              <Link
+                href="/channels"
+                className="btn-pill-ghost w-full justify-between"
+              >
+                <span>Buka Registri 14 Kanal Digital</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Full Portfolio Unit Reconciliation Ledger Table */}
+        <section className="card-clay p-0 overflow-hidden">
+          <div className="px-6 py-4 bg-warm-cream border-b border-sand-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-ink-black flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-ink-black" />
+                <span>Matriks Rekonsiliasi Stok Unit per Proyek</span>
               </h2>
               <p className="text-xs text-stone-gray mt-0.5">
-                Posisi inventaris real-time berdasarkan snapshot terbaru.
+                Rincian alokasi unit berdasarkan snapshot inventaris terbaru.
               </p>
             </div>
             <Link
               href="/projects"
-              className="text-xs font-semibold text-violet-pulse hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-violet-pulse hover:underline inline-flex items-center gap-1"
             >
-              <span>Detail Proyek</span>
-              <ArrowRight className="w-3 h-3" />
+              <span>Kelola Semua Proyek</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {activeHousingProjects.map((project) => {
-              const snapshots = INITIAL_UNIT_SNAPSHOTS[project.id] || [];
-              const latest = snapshots[0];
-              const totalAllocated = latest
-                ? latest.belum_terjual +
-                  latest.booking +
-                  latest.sp3k +
-                  latest.akad_kredit +
-                  latest.cash_keras +
-                  latest.hold_manajemen
-                : 0;
-              const unallocated = project.total_units - totalAllocated;
-
-              return (
-                <div
-                  key={project.id}
-                  className="bg-warm-cream/50 border border-sand-border rounded-xl p-4 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-extrabold text-sm text-ink-black">{project.name}</h3>
-                      <span className="font-mono text-xs font-bold text-stone-700">
-                        {project.total_units} unit
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-sand-border bg-warm-cream/60 text-[11px] font-semibold uppercase tracking-[0.05em] text-ash-gray">
+                  <th className="py-3 px-6">Proyek & Lokasi</th>
+                  <th className="py-3 px-4 text-right">Total Unit</th>
+                  <th className="py-3 px-4 text-right">Belum Terjual</th>
+                  <th className="py-3 px-4 text-right">Booking + SP3K</th>
+                  <th className="py-3 px-4 text-right">Akad + Cash</th>
+                  <th className="py-3 px-4 text-right">Hold</th>
+                  <th className="py-3 px-4 text-right">Status Rekonsiliasi</th>
+                  <th className="py-3 px-6 text-right">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-sand-border text-xs">
+                {projectRows.map((row) => (
+                  <tr
+                    key={row.project.id}
+                    className="hover:bg-warm-cream/50 transition-colors"
+                  >
+                    <td className="py-3.5 px-6">
+                      <Link
+                        href={`/projects/${row.project.slug}`}
+                        className="font-bold text-ink-black hover:text-violet-pulse block"
+                      >
+                        {row.project.name}
+                      </Link>
+                      <span className="text-[11px] text-stone-gray">
+                        {row.project.location}
                       </span>
-                    </div>
-                    <span className="text-[11px] text-stone-gray block mb-3">
-                      Lokasi: {project.location}
-                    </span>
-
-                    {/* Funnel counters grid */}
-                    {latest && (
-                      <div className="grid grid-cols-3 gap-1.5 text-[11px] mb-3">
-                        <div className="p-1.5 bg-paper-white rounded-lg border border-sand-border text-center">
-                          <span className="text-[10px] text-stone-500 block">Belum Terjual</span>
-                          <strong className="font-mono text-ink-black">{latest.belum_terjual}</strong>
-                        </div>
-                        <div className="p-1.5 bg-paper-white rounded-lg border border-sand-border text-center">
-                          <span className="text-[10px] text-amber-700 block">Booking</span>
-                          <strong className="font-mono text-amber-900">{latest.booking}</strong>
-                        </div>
-                        <div className="p-1.5 bg-paper-white rounded-lg border border-sand-border text-center">
-                          <span className="text-[10px] text-blue-700 block">SP3K</span>
-                          <strong className="font-mono text-blue-900">{latest.sp3k}</strong>
-                        </div>
-                        <div className="p-1.5 bg-paper-white rounded-lg border border-sand-border text-center">
-                          <span className="text-[10px] text-emerald-700 block">Akad</span>
-                          <strong className="font-mono text-emerald-900">{latest.akad_kredit}</strong>
-                        </div>
-                        <div className="p-1.5 bg-paper-white rounded-lg border border-sand-border text-center">
-                          <span className="text-[10px] text-stone-600 block">Cash</span>
-                          <strong className="font-mono text-stone-900">{latest.cash_keras}</strong>
-                        </div>
-                        <div className="p-1.5 bg-paper-white rounded-lg border border-sand-border text-center">
-                          <span className="text-[10px] text-purple-700 block">Hold</span>
-                          <strong className="font-mono text-purple-900">{latest.hold_manajemen}</strong>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Unallocated indicator */}
-                  <div className="pt-2 border-t border-sand-border flex items-center justify-between text-xs">
-                    <span className="text-stone-gray">Unallocated:</span>
-                    {unallocated !== 0 ? (
-                      <span className="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                        <AlertTriangle className="w-3 h-3 text-amber-600" />
-                        {unallocated} unit
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        0 (Balance)
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                    </td>
+                    <td className="py-3.5 px-4 text-right metric-mono font-bold text-ink-black">
+                      {row.project.total_units}
+                    </td>
+                    <td className="py-3.5 px-4 text-right metric-mono text-stone-gray">
+                      {row.belumTerjual}
+                    </td>
+                    <td className="py-3.5 px-4 text-right metric-mono font-semibold text-violet-pulse">
+                      {row.pipelineTotal}
+                    </td>
+                    <td className="py-3.5 px-4 text-right metric-mono font-semibold text-forest">
+                      {row.soldTotal}
+                    </td>
+                    <td className="py-3.5 px-4 text-right metric-mono text-stone-gray">
+                      {row.hold}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      {row.unallocated !== 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-ember-surface text-ember-orange border border-ember-border metric-mono">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>{row.unallocated} Unallocated</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-forest-surface text-forest border border-forest-border">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Seimbang (0)</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-6 text-right">
+                      <Link
+                        href={`/projects/${row.project.slug}`}
+                        className="inline-flex items-center gap-1 font-semibold text-ink-black hover:text-violet-pulse"
+                      >
+                        <span>Buka</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
 
-        {/* 2-Column: Current Week Marketing Plan & Today's Activities by PIC */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Current Week Marketing Plan */}
-          <div className="bg-paper-white border border-sand-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+        {/* Section 3: Operational Execution Workbench (5:7 Split) */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left 5 Cols: Daily PIC Log Status (Ferry & Ziyad) */}
+          <div className="lg:col-span-5 card-clay p-6 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between gap-2 pb-4 border-b border-sand-border mb-4">
                 <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-violet-pulse" />
-                  <h2 className="text-base font-extrabold text-ink-black tracking-tight">
-                    Rencana Mingguan Berjalan
+                  <CalendarCheck className="w-4 h-4 text-ink-black" />
+                  <h2 className="text-base font-bold text-ink-black">
+                    Log Aktivitas PIC Hari Ini
                   </h2>
                 </div>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
-                  Aktif
+                <span className="metric-mono text-xs text-stone-gray">
+                  {todayFormatted}
                 </span>
               </div>
 
-              {activePlan ? (
-                <div>
-                  <h3 className="font-bold text-sm text-ink-black">{activePlan.title}</h3>
-                  <p className="text-xs text-stone-gray mt-1 leading-relaxed">
-                    {activePlan.objective}
-                  </p>
-
-                  {/* Progress bar */}
-                  <div className="mt-4 mb-4">
-                    <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                      <span className="text-stone-gray">Progres Target Mingguan</span>
-                      <span className="font-mono text-ink-black font-bold">{planProgressPct}%</span>
+              <div className="space-y-4">
+                {/* Ferry Pratama */}
+                <div className="p-4 rounded-xl bg-warm-cream border border-sand-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-ink-black" />
+                      <span className="text-xs font-bold text-ink-black">
+                        Ferry Pratama
+                      </span>
+                      <span className="text-[11px] text-stone-gray font-medium">
+                        (Supervisor)
+                      </span>
                     </div>
-                    <div className="h-2 w-full bg-warm-cream rounded-full overflow-hidden border border-sand-border">
-                      <div
-                        className="h-full bg-ink-black rounded-full transition-all"
-                        style={{ width: `${planProgressPct}%` }}
-                      />
-                    </div>
+                    <span className="metric-mono text-xs font-bold text-ink-black px-2 py-0.5 rounded bg-paper-white border border-sand-border">
+                      {activitiesByFerry.length} Log
+                    </span>
                   </div>
-
-                  {/* Plan Items checklist */}
-                  <div className="space-y-2">
-                    {planItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="p-2.5 rounded-xl bg-warm-cream/50 border border-sand-border flex items-start justify-between gap-2 text-xs"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <span className="font-bold text-ink-black block truncate">{item.title}</span>
-                          <span className="text-[11px] text-stone-500">
-                            PIC: {item.pic?.full_name} • Batas: {item.due_date}
+                  {activitiesByFerry.length === 0 ? (
+                    <p className="text-xs text-stone-gray">
+                      Belum ada aktivitas yang dicatat hari ini.
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5 mt-2">
+                      {activitiesByFerry.slice(0, 3).map((act) => (
+                        <li
+                          key={act.id}
+                          className="text-xs text-ink-black flex items-center justify-between gap-2 bg-paper-white px-3 py-1.5 rounded-lg border border-sand-border"
+                        >
+                          <span className="truncate font-medium">{act.title}</span>
+                          <span className="metric-mono text-[10px] uppercase font-semibold text-stone-gray">
+                            {act.status}
                           </span>
-                        </div>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                            item.status === 'done'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : item.status === 'in_progress'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-stone-100 text-stone-700'
-                          }`}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Ziyad */}
+                <div className="p-4 rounded-xl bg-warm-cream border border-sand-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-violet-pulse" />
+                      <span className="text-xs font-bold text-ink-black">
+                        Ziyad
+                      </span>
+                      <span className="text-[11px] text-stone-gray font-medium">
+                        (Sr. Branding Officer)
+                      </span>
+                    </div>
+                    <span className="metric-mono text-xs font-bold text-ink-black px-2 py-0.5 rounded bg-paper-white border border-sand-border">
+                      {activitiesByZiyad.length} Log
+                    </span>
+                  </div>
+                  {activitiesByZiyad.length === 0 ? (
+                    <p className="text-xs text-stone-gray">
+                      Belum ada aktivitas yang dicatat hari ini.
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5 mt-2">
+                      {activitiesByZiyad.slice(0, 3).map((act) => (
+                        <li
+                          key={act.id}
+                          className="text-xs text-ink-black flex items-center justify-between gap-2 bg-paper-white px-3 py-1.5 rounded-lg border border-sand-border"
                         >
-                          {item.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                          <span className="truncate font-medium">{act.title}</span>
+                          <span className="metric-mono text-[10px] uppercase font-semibold text-stone-gray">
+                            {act.status}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              ) : (
-                <div className="py-8 text-center text-xs text-stone-gray">
-                  <Target className="w-8 h-8 text-ash-gray mx-auto mb-2" />
-                  <p className="font-semibold text-ink-black">Belum ada rencana mingguan aktif</p>
-                  <p className="text-[11px] text-stone-400 mt-0.5">Buat rencana baru di menu Perencanaan</p>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-sand-border text-right">
-              <Link
-                href="/plans"
-                className="text-xs font-semibold text-violet-pulse hover:underline inline-flex items-center gap-1"
-              >
-                <span>Buka Seluruh Rencana & Evaluasi</span>
-                <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Today's Activities by PIC (Ferry & Ziyad) */}
-          <div className="bg-paper-white border border-sand-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <CalendarCheck className="w-4 h-4 text-violet-pulse" />
-                  <h2 className="text-base font-extrabold text-ink-black tracking-tight">
-                    Aktivitas Hari Ini per PIC
-                  </h2>
-                </div>
-                <span className="text-xs text-stone-gray font-medium">12 Oktober 2026</span>
-              </div>
-
-              {/* PIC: Ferry Pratama */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-sand-border/80">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-violet-pulse" />
-                    <span className="text-xs font-bold text-ink-black">Ferry Pratama</span>
-                    <span className="text-[10px] text-stone-400 font-semibold">(Leader)</span>
-                  </div>
-                  <span className="text-[11px] font-mono text-stone-500">
-                    {activitiesByFerry.length} Aktivitas
-                  </span>
-                </div>
-
-                {activitiesByFerry.length === 0 ? (
-                  <p className="text-xs text-stone-400 italic py-2">Belum ada aktivitas tercatat hari ini</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {activitiesByFerry.map((act) => (
-                      <div
-                        key={act.id}
-                        className="p-2 rounded-xl bg-warm-cream/40 border border-sand-border text-xs flex items-center justify-between gap-2"
-                      >
-                        <span className="font-semibold text-ink-black truncate">{act.title}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
-                          {act.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* PIC: Ziyad */}
-              <div>
-                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-sand-border/80">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span className="text-xs font-bold text-ink-black">Ziyad</span>
-                    <span className="text-[10px] text-stone-400 font-semibold">(Sr. Officer)</span>
-                  </div>
-                  <span className="text-[11px] font-mono text-stone-500">
-                    {activitiesByZiyad.length} Aktivitas
-                  </span>
-                </div>
-
-                {activitiesByZiyad.length === 0 ? (
-                  <p className="text-xs text-stone-400 italic py-2">Belum ada aktivitas tercatat hari ini</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {activitiesByZiyad.map((act) => (
-                      <div
-                        key={act.id}
-                        className="p-2 rounded-xl bg-warm-cream/40 border border-sand-border text-xs flex items-center justify-between gap-2"
-                      >
-                        <span className="font-semibold text-ink-black truncate">{act.title}</span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                            act.status === 'done'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : act.status === 'in_progress'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-stone-100 text-stone-700'
-                          }`}
-                        >
-                          {act.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-sand-border text-right">
+            <div className="pt-4 mt-5 border-t border-sand-border flex items-center justify-between">
+              <span className="text-xs text-stone-gray">
+                Total tercatat: <strong className="metric-mono text-ink-black">{todayActivities.length}</strong> aktivitas
+              </span>
               <Link
                 href="/activities"
                 className="text-xs font-semibold text-violet-pulse hover:underline inline-flex items-center gap-1"
               >
-                <span>Kelola Aktivitas Harian</span>
-                <ArrowRight className="w-3 h-3" />
+                <span>Buka Log Harian</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* Content Due This Week Strip */}
-        <div className="bg-paper-white border border-sand-border rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-extrabold text-ink-black tracking-tight flex items-center gap-2">
-                <Share2 className="w-4 h-4 text-violet-pulse" />
-                <span>Jadwal Konten Publikasi Pekan Ini</span>
-              </h2>
-              <p className="text-xs text-stone-gray mt-0.5">
-                Rencana konten reels, carousel edukasi KPR, dan update pembangunan.
-              </p>
-            </div>
-            <Link
-              href="/content"
-              className="text-xs font-semibold text-violet-pulse hover:underline flex items-center gap-1"
-            >
-              <span>Kalender Editorial</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {upcomingContent.length === 0 ? (
-              <div className="py-8 text-center text-xs text-stone-gray col-span-full">
-                <Share2 className="w-8 h-8 text-ash-gray mx-auto mb-2" />
-                <p className="font-semibold text-ink-black">Belum ada jadwal konten untuk pekan ini</p>
-                <p className="text-[11px] text-stone-400 mt-0.5">Jadwalkan konten baru di Kalender Editorial</p>
-              </div>
-            ) : (
-              upcomingContent.map((content) => (
-                <div
-                  key={content.id}
-                  className="p-3.5 rounded-xl bg-warm-cream/50 border border-sand-border flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-stone-gray mb-1.5">
-                      <span className="font-semibold text-violet-pulse uppercase text-[10px] tracking-wider">
-                        {content.format}
-                      </span>
-                      <span className="font-mono text-[11px]">{content.publish_date}</span>
-                    </div>
-                    <h4 className="font-bold text-xs text-ink-black line-clamp-2 mb-2">
-                      {content.title}
-                    </h4>
+          {/* Right 7 Cols: Active Marketing Plan & Editorial Pipeline */}
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Active Marketing Plan Card */}
+            <div className="card-clay p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 pb-3 border-b border-sand-border mb-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-ink-black" />
+                    <h2 className="text-sm font-bold text-ink-black">
+                      Rencana Marketing Aktif
+                    </h2>
                   </div>
-                  <div className="pt-2 border-t border-sand-border/70 flex items-center justify-between text-[11px]">
-                    <span className="text-stone-500 font-mono truncate">{content.channel?.handle}</span>
-                    <span className="font-bold text-stone-700 capitalize">{content.status}</span>
-                  </div>
+                  <span className="metric-mono text-xs font-bold text-ink-black">
+                    {planProgressPct}%
+                  </span>
                 </div>
-              ))
-            )}
+
+                {activePlan ? (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-ink-black">
+                      {activePlan.title}
+                    </h3>
+                    <p className="text-xs text-stone-gray leading-relaxed">
+                      {activePlan.objective}
+                    </p>
+                    <div className="h-2 w-full bg-warm-cream rounded-full overflow-hidden border border-sand-border">
+                      <div
+                        className="h-full bg-ink-black rounded-full"
+                        style={{ width: `${planProgressPct}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-6 space-y-2">
+                    <p className="text-xs font-semibold text-ink-black">
+                      Belum ada rencana mingguan aktif.
+                    </p>
+                    <p className="text-xs text-stone-gray leading-relaxed">
+                      Susun target mingguan atau bulanan beserta matriks KPI untuk memantau progres eksekusi tim.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-sand-border">
+                <Link
+                  href="/plans"
+                  className="btn-pill-ghost w-full justify-between"
+                >
+                  <span>Kelola Rencana & KPI</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Content Pipeline Card */}
+            <div className="card-clay p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 pb-3 border-b border-sand-border mb-4">
+                  <div className="flex items-center gap-2">
+                    <Share2 className="w-4 h-4 text-ink-black" />
+                    <h2 className="text-sm font-bold text-ink-black">
+                      Antrian Konten Pekan Ini
+                    </h2>
+                  </div>
+                  <span className="metric-mono text-xs font-bold text-ink-black">
+                    {upcomingContent.length} Item
+                  </span>
+                </div>
+
+                {upcomingContent.length === 0 ? (
+                  <div className="py-6 space-y-2">
+                    <p className="text-xs font-semibold text-ink-black">
+                      Antrian publikasi masih kosong.
+                    </p>
+                    <p className="text-xs text-stone-gray leading-relaxed">
+                      Jadwalkan produksi Reels, Carousel edukasi KPR, atau dokumentasi progres lapangan di Kalender Konten.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {upcomingContent.map((content) => (
+                      <li
+                        key={content.id}
+                        className="p-2.5 rounded-xl bg-warm-cream border border-sand-border text-xs"
+                      >
+                        <div className="flex items-center justify-between text-[11px] text-stone-gray mb-0.5">
+                          <span className="font-semibold uppercase text-ink-black">
+                            {content.format}
+                          </span>
+                          <span className="metric-mono">{content.publish_date}</span>
+                        </div>
+                        <p className="font-semibold text-ink-black truncate">
+                          {content.title}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-sand-border">
+                <Link
+                  href="/content"
+                  className="btn-pill-ghost w-full justify-between"
+                >
+                  <span>Buka Kalender Konten</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </AppShell>
   );

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
+import { Modal } from '@/components/ui/modal';
 import { Channel, ChannelInsight, ChannelPlatform } from '@/lib/types/database';
 import {
   getPlatformMetrics,
@@ -31,7 +32,6 @@ import {
   MapPin,
   Radio,
   Building2,
-  X,
   CheckCircle2,
   Database,
 } from 'lucide-react';
@@ -51,7 +51,6 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
   const [insights, setInsights] = useState<ChannelInsight[]>(INITIAL_CHANNEL_INSIGHTS);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
-  // Manual Form State
   const platformMetrics = getPlatformMetrics(channel.platform);
   const [formData, setFormData] = useState({
     period_type: '7d' as '7d' | '30d',
@@ -95,16 +94,13 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
     }
   };
 
-  // Filter insights for this channel & selected period
   const channelInsights = insights.filter(
     (ci) => ci.channel_id === channel.id && ci.period_type === periodType
   );
 
-  // Current period is 2026-10-05 to 2026-10-11 for 7d (or latest)
   const currentInsights = channelInsights.filter((ci) => ci.period_start === '2026-10-05');
   const prevInsights = channelInsights.filter((ci) => ci.period_start === '2026-09-28');
 
-  // Trend series for chart
   const trendData = CHANNEL_TREND_SERIES[channel.id] || [
     { date: 'Mgg 1', [platformMetrics[0]?.key || 'val']: 450 },
     { date: 'Mgg 2', [platformMetrics[0]?.key || 'val']: 620 },
@@ -113,7 +109,6 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
     { date: 'Mgg 5', [platformMetrics[0]?.key || 'val']: 1180 },
   ];
 
-  // Active chart metric
   const availableChartKeys = Object.keys(trendData[0] || {}).filter((k) => k !== 'date');
   const [selectedChartMetric, setSelectedChartMetric] = useState<string>(
     availableChartKeys[0] || platformMetrics[0]?.key || ''
@@ -149,10 +144,10 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      <div className="space-y-8 max-w-7xl mx-auto pb-12">
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs font-semibold text-stone-gray">
-          <Link href="/channels" className="hover:text-ink-black flex items-center gap-1">
+        <div className="flex items-center gap-2 text-xs font-bold text-stone-gray">
+          <Link href="/channels" className="hover:text-ink-black inline-flex items-center gap-1 min-h-9">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Daftar Saluran</span>
           </Link>
@@ -163,37 +158,37 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
         </div>
 
         {/* Header Banner */}
-        <div className="bg-paper-white border border-sand-border rounded-2xl p-6 shadow-xs">
+        <div className="card-clay p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="p-3.5 rounded-2xl bg-warm-cream border border-sand-border text-ink-black shrink-0">
                 {getPlatformIcon(channel.platform, 'w-7 h-7')}
               </div>
               <div>
-                <div className="flex flex-wrap items-center gap-2 mb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <h1 className="text-xl sm:text-2xl font-black text-ink-black tracking-tight">
                     {channel.name}
                   </h1>
                   {channel.active ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-forest-emerald bg-forest-surface px-2.5 py-0.5 rounded-full border border-forest-emerald/30">
+                      <CheckCircle2 className="w-3 h-3" />
                       Aktif
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold text-stone-500 bg-stone-100 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[11px] font-bold text-stone-gray bg-warm-cream px-2.5 py-0.5 rounded-full border border-sand-border">
                       Non-aktif
                     </span>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2.5 text-xs text-stone-gray">
                   {channel.handle && (
-                    <span className="font-mono bg-warm-cream px-2 py-0.5 rounded-md border border-sand-border">
+                    <span className="metric-mono bg-warm-cream px-2.5 py-0.5 rounded-md border border-sand-border text-ink-black font-bold">
                       {channel.handle}
                     </span>
                   )}
                   {channel.projectName && (
-                    <span className="inline-flex items-center gap-1 bg-warm-cream px-2 py-0.5 rounded-md border border-sand-border">
-                      <Building2 className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center gap-1 bg-warm-cream px-2.5 py-0.5 rounded-md border border-sand-border text-ink-black font-semibold">
+                      <Building2 className="w-3.5 h-3.5 text-stone-gray" />
                       {channel.projectName}
                     </span>
                   )}
@@ -202,7 +197,7 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                       href={channel.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-violet-pulse hover:underline font-semibold"
+                      className="inline-flex items-center gap-1 text-violet-pulse hover:underline font-bold"
                     >
                       <span>Kunjungi URL Saluran</span>
                       <ExternalLink className="w-3 h-3" />
@@ -214,23 +209,24 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
 
             {/* Action Buttons & Period Toggle */}
             <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-              {/* Period Switcher */}
               <div className="flex items-center p-1 bg-warm-cream border border-sand-border rounded-full">
                 <button
+                  type="button"
                   onClick={() => setPeriodType('7d')}
-                  className={`px-3.5 py-1 text-xs font-bold rounded-full transition-all ${
+                  className={`px-3.5 min-h-9 text-xs font-bold rounded-full transition-colors ${
                     periodType === '7d'
-                      ? 'bg-ink-black text-paper-white shadow-xs'
+                      ? 'bg-ink-black text-paper-white'
                       : 'text-stone-gray hover:text-ink-black'
                   }`}
                 >
                   7 Hari (7d)
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPeriodType('30d')}
-                  className={`px-3.5 py-1 text-xs font-bold rounded-full transition-all ${
+                  className={`px-3.5 min-h-9 text-xs font-bold rounded-full transition-colors ${
                     periodType === '30d'
-                      ? 'bg-ink-black text-paper-white shadow-xs'
+                      ? 'bg-ink-black text-paper-white'
                       : 'text-stone-gray hover:text-ink-black'
                   }`}
                 >
@@ -238,10 +234,10 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                 </button>
               </div>
 
-              {/* Manual Input Trigger */}
               <button
+                type="button"
                 onClick={() => setIsManualModalOpen(true)}
-                className="px-4 py-2 text-xs font-semibold text-paper-white bg-ink-black rounded-full hover:bg-stone-800 transition-colors shadow-xs flex items-center gap-1.5"
+                className="btn-pill-primary text-xs"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Input Metrik Manual</span>
@@ -250,7 +246,7 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
           </div>
         </div>
 
-        {/* KPI Cards Grid */}
+        {/* KPI Cards Grid (<= 6 cards per platform) */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-extrabold text-ink-black tracking-tight">
@@ -261,8 +257,8 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-            {platformMetrics.map((def: MetricDefinition) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {platformMetrics.slice(0, 6).map((def: MetricDefinition) => {
               const currentItem = currentInsights.find((ci) => ci.metric_key === def.key);
               const prevItem = prevInsights.find((ci) => ci.metric_key === def.key);
 
@@ -280,23 +276,23 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
               return (
                 <div
                   key={def.key}
-                  className="bg-paper-white border border-sand-border rounded-2xl p-4 shadow-xs flex flex-col justify-between"
+                  className="card-clay p-4 flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-1 mb-1.5">
-                      <span className="text-xs font-semibold text-stone-gray uppercase tracking-wider truncate">
+                      <span className="text-xs font-bold text-stone-gray uppercase tracking-wider truncate">
                         {def.shortLabel || def.label}
                       </span>
                       {currentItem?.source && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-warm-cream border border-sand-border text-stone-500">
+                        <span className="text-[10px] metric-mono px-1.5 py-0.5 rounded-md bg-warm-cream border border-sand-border text-stone-gray">
                           {currentItem.source}
                         </span>
                       )}
                     </div>
-                    <div className="text-xl sm:text-2xl font-black text-ink-black font-mono">
+                    <div className="text-xl sm:text-2xl font-black text-ink-black metric-mono">
                       {formatMetricValue(currVal, def)}
                     </div>
-                    <p className="text-[11px] text-stone-500 line-clamp-1 mt-0.5">
+                    <p className="text-[11px] text-stone-gray line-clamp-1 mt-0.5">
                       {def.description}
                     </p>
                   </div>
@@ -304,27 +300,27 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                   <div className="mt-3 pt-2.5 border-t border-sand-border/70 flex items-center justify-between text-xs">
                     <span className="text-[11px] text-stone-gray">
                       Lalu:{' '}
-                      <span className="font-mono font-medium text-ink-black">
-                        {prevVal !== null ? formatMetricValue(prevVal, def) : '—'}
+                      <span className="metric-mono font-bold text-ink-black">
+                        {prevVal !== null ? formatMetricValue(prevVal, def) : '-'}
                       </span>
                     </span>
 
                     {deltaPct !== null ? (
                       <div
-                        className={`inline-flex items-center gap-0.5 font-bold text-[11px] px-1.5 py-0.5 rounded-full ${
+                        className={`inline-flex items-center gap-0.5 font-bold text-[11px] px-2 py-0.5 rounded-full border metric-mono ${
                           deltaPct > 0
-                            ? 'text-emerald-700 bg-emerald-50'
+                            ? 'text-forest-emerald bg-forest-surface border-forest-emerald/30'
                             : deltaPct < 0
-                            ? 'text-rose-700 bg-rose-50'
-                            : 'text-stone-600 bg-stone-100'
+                            ? 'text-ember-orange bg-ember-surface border-ember-orange/30'
+                            : 'text-stone-gray bg-warm-cream border-sand-border'
                         }`}
                       >
                         {deltaPct > 0 ? (
-                          <TrendingUp className="w-3 h-3 text-emerald-600" />
+                          <TrendingUp className="w-3 h-3" />
                         ) : deltaPct < 0 ? (
-                          <TrendingDown className="w-3 h-3 text-rose-600" />
+                          <TrendingDown className="w-3 h-3" />
                         ) : (
-                          <Minus className="w-3 h-3 text-stone-500" />
+                          <Minus className="w-3 h-3" />
                         )}
                         <span>
                           {deltaPct > 0 ? '+' : ''}
@@ -332,7 +328,7 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                         </span>
                       </div>
                     ) : (
-                      <span className="text-[11px] text-stone-400">Baru</span>
+                      <span className="text-[11px] text-stone-gray">Baru</span>
                     )}
                   </div>
                 </div>
@@ -342,7 +338,7 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
         </div>
 
         {/* Trend Line Chart */}
-        <div className="bg-paper-white border border-sand-border rounded-2xl p-6 shadow-xs">
+        <div className="card-clay p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <div>
               <h2 className="text-base font-extrabold text-ink-black tracking-tight">
@@ -353,7 +349,6 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
               </p>
             </div>
 
-            {/* Metric Selector for Chart */}
             <div className="flex flex-wrap items-center gap-1.5">
               {availableChartKeys.map((metricKey) => {
                 const def = platformMetrics.find((m) => m.key === metricKey);
@@ -361,10 +356,11 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                 return (
                   <button
                     key={metricKey}
+                    type="button"
                     onClick={() => setSelectedChartMetric(metricKey)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${
+                    className={`px-3 min-h-9 text-xs font-bold rounded-full transition-colors ${
                       isSelected
-                        ? 'bg-ink-black text-paper-white shadow-xs'
+                        ? 'bg-ink-black text-paper-white'
                         : 'bg-warm-cream text-stone-gray hover:text-ink-black border border-sand-border'
                     }`}
                   >
@@ -381,12 +377,12 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dad4c8" />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11, fill: '#737373' }}
+                  tick={{ fontSize: 11, fill: '#52504c' }}
                   axisLine={{ stroke: '#dad4c8' }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: '#737373' }}
+                  tick={{ fontSize: 11, fill: '#52504c' }}
                   axisLine={{ stroke: '#dad4c8' }}
                   tickLine={false}
                   tickFormatter={(val) => (val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val)}
@@ -397,14 +393,14 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                       const dataPoint = payload[0];
                       const def = platformMetrics.find((m) => m.key === selectedChartMetric);
                       return (
-                        <div className="bg-paper-white p-3 border border-sand-border rounded-xl shadow-lg">
+                        <div className="bg-paper-white p-3 border border-ink-black rounded-xl">
                           <p className="text-xs font-bold text-ink-black mb-1">Periode: {label}</p>
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-violet-pulse" />
                             <span className="text-xs text-stone-gray">
                               {def?.label || selectedChartMetric}:
                             </span>
-                            <span className="text-xs font-bold text-ink-black font-mono">
+                            <span className="text-xs font-bold text-ink-black metric-mono">
                               {Number(dataPoint.value).toLocaleString('id-ID')}
                             </span>
                           </div>
@@ -417,10 +413,10 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                 <Line
                   type="monotone"
                   dataKey={selectedChartMetric}
-                  stroke="#3859f9"
+                  stroke="#2b4be0"
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#3859f9', stroke: '#ffffff', strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: '#000000', stroke: '#3859f9', strokeWidth: 2 }}
+                  dot={{ r: 4, fill: '#2b4be0', stroke: '#ffffff', strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: '#000000', stroke: '#2b4be0', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -428,7 +424,7 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
         </div>
 
         {/* Historical Insights Data Table */}
-        <div className="bg-paper-white border border-sand-border rounded-2xl p-6 shadow-xs">
+        <div className="card-clay p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-extrabold text-ink-black tracking-tight flex items-center gap-2">
@@ -439,7 +435,7 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
                 Riwayat catatan hasil import dan entri manual saluran {channel.name}.
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-warm-cream border border-sand-border text-ink-black">
+            <span className="text-xs font-bold metric-mono px-2.5 py-1 rounded-full bg-warm-cream border border-sand-border text-ink-black">
               {channelInsights.length} Entri
             </span>
           </div>
@@ -447,39 +443,39 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-sand-border text-stone-gray uppercase tracking-wider bg-warm-cream/50">
-                  <th className="py-2.5 px-3 font-semibold">Rentang Periode</th>
-                  <th className="py-2.5 px-3 font-semibold">Tipe</th>
-                  <th className="py-2.5 px-3 font-semibold">Metrik</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Nilai Tercatat</th>
-                  <th className="py-2.5 px-3 font-semibold text-center">Sumber</th>
+                <tr className="border-b border-sand-border text-stone-gray uppercase tracking-wider bg-warm-cream">
+                  <th className="py-2.5 px-3 font-bold">Rentang Periode</th>
+                  <th className="py-2.5 px-3 font-bold">Tipe</th>
+                  <th className="py-2.5 px-3 font-bold">Metrik</th>
+                  <th className="py-2.5 px-3 font-bold text-right">Nilai Tercatat</th>
+                  <th className="py-2.5 px-3 font-bold text-center">Sumber</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-sand-border/70">
                 {channelInsights.map((item) => {
                   const def = platformMetrics.find((m) => m.key === item.metric_key);
                   return (
-                    <tr key={item.id} className="hover:bg-warm-cream/30 transition-colors">
-                      <td className="py-2.5 px-3 font-medium text-ink-black whitespace-nowrap">
+                    <tr key={item.id} className="hover:bg-warm-cream/40 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-ink-black whitespace-nowrap metric-mono">
                         {item.period_start} s/d {item.period_end}
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-700">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold metric-mono bg-warm-cream border border-sand-border text-ink-black">
                           {item.period_type}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-ink-black">
+                      <td className="py-2.5 px-3 font-semibold text-ink-black">
                         {def?.label || item.metric_key}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-ink-black font-mono">
+                      <td className="py-2.5 px-3 text-right font-extrabold text-ink-black metric-mono">
                         {formatMetricValue(item.value, def)}
                       </td>
                       <td className="py-2.5 px-3 text-center whitespace-nowrap">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             item.source === 'import'
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : 'bg-purple-50 text-purple-700 border-purple-200'
+                              ? 'bg-warm-cream text-ink-black border-sand-border'
+                              : 'bg-ink-black text-paper-white border-ink-black'
                           }`}
                         >
                           {item.source}
@@ -494,139 +490,123 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
         </div>
 
         {/* Manual Metric Entry Modal */}
-        {isManualModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <div className="bg-paper-white border border-sand-border rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-              <button
-                onClick={() => setIsManualModalOpen(false)}
-                className="absolute top-4 right-4 text-stone-gray hover:text-ink-black p-1.5 rounded-full hover:bg-stone-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-xl bg-warm-cream border border-sand-border text-ink-black">
-                  <PlusCircle className="w-5 h-5 text-violet-pulse" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-ink-black tracking-tight">
-                    Input Metrik Manual
-                  </h3>
-                  <p className="text-xs text-stone-gray">{channel.name}</p>
-                </div>
+        <Modal
+          open={isManualModalOpen}
+          onClose={() => setIsManualModalOpen(false)}
+          title="Input Metrik Manual"
+          description={channel.name}
+          maxWidthClass="max-w-md"
+        >
+          <form onSubmit={handleManualSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-ink-black uppercase tracking-wider mb-1.5">
+                Tipe Periode
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, period_type: '7d' })}
+                  className={`min-h-10 text-xs font-bold rounded-xl border text-center transition-colors ${
+                    formData.period_type === '7d'
+                      ? 'bg-ink-black text-paper-white border-ink-black'
+                      : 'bg-paper-white text-ink-black border-sand-border'
+                  }`}
+                >
+                  7 Hari (7d)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, period_type: '30d' })}
+                  className={`min-h-10 text-xs font-bold rounded-xl border text-center transition-colors ${
+                    formData.period_type === '30d'
+                      ? 'bg-ink-black text-paper-white border-ink-black'
+                      : 'bg-paper-white text-ink-black border-sand-border'
+                  }`}
+                >
+                  30 Hari (30d)
+                </button>
               </div>
-
-              <form onSubmit={handleManualSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-ink-black uppercase tracking-wider mb-1.5">
-                    Tipe Periode
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, period_type: '7d' })}
-                      className={`py-2 text-xs font-bold rounded-xl border text-center transition-all ${
-                        formData.period_type === '7d'
-                          ? 'bg-ink-black text-paper-white border-ink-black'
-                          : 'bg-paper-white text-ink-black border-sand-border'
-                      }`}
-                    >
-                      7 Hari (7d)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, period_type: '30d' })}
-                      className={`py-2 text-xs font-bold rounded-xl border text-center transition-all ${
-                        formData.period_type === '30d'
-                          ? 'bg-ink-black text-paper-white border-ink-black'
-                          : 'bg-paper-white text-ink-black border-sand-border'
-                      }`}
-                    >
-                      30 Hari (30d)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Tanggal Mulai
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.period_start}
-                      onChange={(e) => setFormData({ ...formData, period_start: e.target.value })}
-                      required
-                      className="w-full text-xs bg-warm-cream border border-sand-border rounded-xl px-3 py-2 text-ink-black focus:outline-hidden focus:ring-1 focus:ring-ink-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Tanggal Selesai
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.period_end}
-                      onChange={(e) => setFormData({ ...formData, period_end: e.target.value })}
-                      required
-                      className="w-full text-xs bg-warm-cream border border-sand-border rounded-xl px-3 py-2 text-ink-black focus:outline-hidden focus:ring-1 focus:ring-ink-black"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-ink-black uppercase tracking-wider mb-1.5">
-                    Pilih Metrik
-                  </label>
-                  <select
-                    value={formData.metric_key}
-                    onChange={(e) => setFormData({ ...formData, metric_key: e.target.value })}
-                    required
-                    className="w-full text-xs bg-warm-cream border border-sand-border rounded-xl px-3 py-2 text-ink-black focus:outline-hidden focus:ring-1 focus:ring-ink-black"
-                  >
-                    {platformMetrics.map((m) => (
-                      <option key={m.key} value={m.key}>
-                        {m.label} ({m.shortLabel || m.key})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-ink-black uppercase tracking-wider mb-1.5">
-                    Nilai Metrik
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    placeholder="Contoh: 18450"
-                    required
-                    className="w-full text-xs bg-warm-cream border border-sand-border rounded-xl px-3 py-2 text-ink-black font-mono focus:outline-hidden focus:ring-1 focus:ring-ink-black"
-                  />
-                </div>
-
-                <div className="pt-2 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsManualModalOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold text-stone-gray hover:text-ink-black bg-stone-100 rounded-full"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 text-xs font-bold text-paper-white bg-ink-black rounded-full hover:bg-stone-800 transition-colors shadow-xs"
-                  >
-                    Simpan Metrik
-                  </button>
-                </div>
-              </form>
             </div>
-          </div>
-        )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-stone-gray uppercase tracking-wider mb-1">
+                  Tanggal Mulai
+                </label>
+                <input
+                  type="date"
+                  value={formData.period_start}
+                  onChange={(e) => setFormData({ ...formData, period_start: e.target.value })}
+                  required
+                  className="input-clay text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-stone-gray uppercase tracking-wider mb-1">
+                  Tanggal Selesai
+                </label>
+                <input
+                  type="date"
+                  value={formData.period_end}
+                  onChange={(e) => setFormData({ ...formData, period_end: e.target.value })}
+                  required
+                  className="input-clay text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-ink-black uppercase tracking-wider mb-1.5">
+                Pilih Metrik
+              </label>
+              <select
+                value={formData.metric_key}
+                onChange={(e) => setFormData({ ...formData, metric_key: e.target.value })}
+                required
+                className="input-clay text-xs"
+              >
+                {platformMetrics.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.label} ({m.shortLabel || m.key})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-ink-black uppercase tracking-wider mb-1.5">
+                Nilai Metrik
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={formData.value}
+                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                placeholder="Contoh: 18450"
+                required
+                className="input-clay text-xs metric-mono"
+              />
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsManualModalOpen(false)}
+                className="btn-pill-ghost text-xs"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="btn-pill-primary text-xs"
+              >
+                Simpan Metrik
+              </button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </AppShell>
   );
 }
+

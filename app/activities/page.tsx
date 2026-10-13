@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/ui/page-header';
+import { Modal } from '@/components/ui/modal';
 import {
   INITIAL_ACTIVITIES,
   INITIAL_PROFILES,
@@ -14,8 +16,7 @@ import {
 } from '@/lib/types/database';
 import {
   CalendarCheck,
-  PlusCircle,
-  Filter,
+  Plus,
   Clock,
   MessageSquare,
   CheckCircle2,
@@ -23,7 +24,6 @@ import {
   User,
   Building2,
   ExternalLink,
-  X,
   Send,
 } from 'lucide-react';
 
@@ -38,7 +38,7 @@ const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   event: 'Event & Pameran',
   offline_production: 'Produksi Cetak/Baliho',
   sales_support: 'Dukungan Sales/CRO',
-  sosialisasi: 'Sosialisasi Instansi',
+  sosialisasi: 'Sosialisasi',
   meeting: 'Rapat Koordinasi',
   research: 'Riset Pasar / Housing',
   other: 'Lainnya',
@@ -46,13 +46,33 @@ const CATEGORY_LABELS: Record<ActivityCategory, string> = {
 
 const STATUS_CONFIG: Record<
   ActivityStatus,
-  { label: string; bg: string; text: string; border: string }
+  { label: string; badgeClass: string; dotClass: string }
 > = {
-  planned: { label: 'Direncanakan', bg: 'bg-warm-cream', text: 'text-stone-gray', border: 'border-sand-border' },
-  in_progress: { label: 'Sedang Berjalan', bg: 'bg-sky-50', text: 'text-sky-800', border: 'border-sky-200' },
-  done: { label: 'Selesai', bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200' },
-  blocked: { label: 'Terkendala', bg: 'bg-rose-50', text: 'text-rose-800', border: 'border-rose-200' },
-  carried_over: { label: 'Dialihkan (Besok)', bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
+  planned: {
+    label: 'Direncanakan',
+    badgeClass: 'bg-warm-cream text-stone-gray border-sand-border',
+    dotClass: 'bg-ash-gray',
+  },
+  in_progress: {
+    label: 'Sedang Berjalan',
+    badgeClass: 'bg-paper-white text-violet-pulse border-violet-pulse/40',
+    dotClass: 'bg-violet-pulse',
+  },
+  done: {
+    label: 'Selesai',
+    badgeClass: 'bg-forest-surface text-forest border-forest-border',
+    dotClass: 'bg-forest',
+  },
+  blocked: {
+    label: 'Terkendala',
+    badgeClass: 'bg-ember-surface text-ember-orange border-ember-border',
+    dotClass: 'bg-ember-orange',
+  },
+  carried_over: {
+    label: 'Dialihkan (Besok)',
+    badgeClass: 'bg-warm-cream text-ink-black border-ink-black/30',
+    dotClass: 'bg-ink-black',
+  },
 };
 
 let nextActivityId = 100;
@@ -64,10 +84,10 @@ function getNextActivityId() {
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<DailyActivity[]>(INITIAL_ACTIVITIES);
 
-  // PIC Filter: Ferry, Ziyad, All (Shella removed per instruction)
+  // PIC Filter strictly limited to Semua PIC, Ferry, and Ziyad
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
-  const [selectedDate, setSelectedDate] = useState('2026-10-12');
+  const [selectedDate, setSelectedDate] = useState('2026-10-13');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
@@ -90,43 +110,29 @@ export default function ActivitiesPage() {
   const [noteModalActivity, setNoteModalActivity] = useState<DailyActivity | null>(null);
   const [leaderNoteText, setLeaderNoteText] = useState('');
 
-  // Filtering
   const filteredActivities = activities.filter((act) => {
-    // PIC filter
     if (picFilter === 'ferry' && !act.pic?.full_name.includes('Ferry')) return false;
     if (picFilter === 'ziyad' && !act.pic?.full_name.includes('Ziyad')) return false;
-
-    // Date filter in day view
     if (viewMode === 'day' && act.activity_date !== selectedDate) return false;
-
-    // Category filter
     if (categoryFilter !== 'all' && act.category !== categoryFilter) return false;
-
-    // Status filter
     if (statusFilter !== 'all' && act.status !== statusFilter) return false;
-
-    // Project filter
     if (projectFilter !== 'all' && act.project_id !== projectFilter) return false;
-
     return true;
   });
 
-  // Action: Carry Over to Tomorrow
   const handleCarryOver = (activity: DailyActivity) => {
     const carriedActivity: DailyActivity = {
       ...activity,
       id: getNextActivityId(),
-      activity_date: '2026-10-13',
+      activity_date: '2026-10-14',
       status: 'carried_over',
       notes: `${activity.notes || ''} [Dialihkan dari ${activity.activity_date}]`.trim(),
-      created_at: '2026-10-13T00:00:00Z',
-      updated_at: '2026-10-13T00:00:00Z',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
-
     setActivities([carriedActivity, ...activities]);
   };
 
-  // Action: Add Leader Note
   const handleSaveLeaderNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!noteModalActivity) return;
@@ -139,10 +145,10 @@ export default function ActivitiesPage() {
     setNoteModalActivity(null);
   };
 
-  // Action: Create New Activity
   const handleCreateActivity = (e: React.FormEvent) => {
     e.preventDefault();
-    const picObj = INITIAL_PROFILES.find((p) => p.id === formData.pic_id) || INITIAL_PROFILES[0];
+    const picObj =
+      INITIAL_PROFILES.find((p) => p.id === formData.pic_id) || INITIAL_PROFILES[0];
     const projectObj = INITIAL_PROJECTS.find((p) => p.id === formData.project_id);
 
     const newActivity: DailyActivity = {
@@ -182,49 +188,51 @@ export default function ActivitiesPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-sand-border">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warm-cream border border-sand-border text-xs text-stone-gray font-medium mb-1.5">
-              <CalendarCheck className="w-3.5 h-3.5 text-ink-black" />
-              <span>Operasional Harian Tim</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink-black">
-              Aktivitas Harian
-            </h1>
-            <p className="text-sm text-stone-gray">
-              Pencatatan tugas, pelaporan hasil kerja, alih tugas (carry over), dan evaluasi supervisor.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="btn-pill-primary text-xs sm:text-sm inline-flex items-center gap-2 self-start sm:self-auto"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ Catat Aktivitas</span>
-          </button>
-        </div>
-
-        {/* Control Bar: PIC Tabs & View Mode */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-2xl bg-warm-cream border border-sand-border">
-          {/* PIC Tabs: Ferry, Ziyad, All */}
-          <div className="flex items-center gap-1 p-1 bg-paper-white border border-sand-border rounded-full self-start">
+        <PageHeader
+          section="Operasional Harian"
+          meta={<span className="metric-mono">{filteredActivities.length} Log Ditampilkan</span>}
+          title="Aktivitas Harian Tim"
+          description="Pencatatan eksekusi kerja harian, bukti output konten/desain, pengalihan tugas (carry over), dan catatan evaluasi supervisor."
+          actions={
             <button
+              type="button"
+              onClick={() => setIsAddOpen(true)}
+              className="btn-pill-primary"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Catat Aktivitas</span>
+            </button>
+          }
+        />
+
+        {/* Primary Workbench Bar: PIC Filter (Semua PIC, Ferry, Ziyad) & Date Mode */}
+        <div className="p-3 rounded-2xl bg-warm-cream border border-sand-border flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div
+            role="tablist"
+            aria-label="Filter PIC"
+            className="flex flex-wrap items-center gap-1.5 p-1 bg-paper-white border border-sand-border rounded-full self-start"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={picFilter === 'all'}
               onClick={() => setPicFilter('all')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
+              className={`px-4 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
                 picFilter === 'all'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
+                  ? 'bg-ink-black text-paper-white'
                   : 'text-stone-gray hover:text-ink-black'
               }`}
             >
               Semua PIC
             </button>
             <button
+              type="button"
+              role="tab"
+              aria-selected={picFilter === 'ferry'}
               onClick={() => setPicFilter('ferry')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-4 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 picFilter === 'ferry'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
+                  ? 'bg-ink-black text-paper-white'
                   : 'text-stone-gray hover:text-ink-black'
               }`}
             >
@@ -232,10 +240,13 @@ export default function ActivitiesPage() {
               <span className="text-[10px] opacity-75">(Leader)</span>
             </button>
             <button
+              type="button"
+              role="tab"
+              aria-selected={picFilter === 'ziyad'}
               onClick={() => setPicFilter('ziyad')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-4 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 picFilter === 'ziyad'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
+                  ? 'bg-ink-black text-paper-white'
                   : 'text-stone-gray hover:text-ink-black'
               }`}
             >
@@ -244,12 +255,12 @@ export default function ActivitiesPage() {
             </button>
           </div>
 
-          {/* View Switcher & Date */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 p-1 bg-paper-white border border-sand-border rounded-full">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center p-1 bg-paper-white border border-sand-border rounded-full">
               <button
+                type="button"
                 onClick={() => setViewMode('day')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
                   viewMode === 'day'
                     ? 'bg-ink-black text-paper-white'
                     : 'text-stone-gray hover:text-ink-black'
@@ -258,159 +269,175 @@ export default function ActivitiesPage() {
                 Harian
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('week')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
                   viewMode === 'week'
                     ? 'bg-ink-black text-paper-white'
                     : 'text-stone-gray hover:text-ink-black'
                 }`}
               >
-                Mingguan
+                Semua Tanggal
               </button>
             </div>
 
             {viewMode === 'day' && (
               <input
                 type="date"
+                aria-label="Pilih tanggal aktivitas"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-sand-border bg-paper-white text-xs font-medium text-ink-black"
+                className="px-3.5 py-2 min-h-10 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black metric-mono"
               />
             )}
           </div>
         </div>
 
-        {/* Secondary Filter Row */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center gap-1.5 text-stone-gray font-semibold">
-            <Filter className="w-3.5 h-3.5" />
-            <span>Filter:</span>
+        {/* Secondary Attribute Filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label htmlFor="filter-category" className="sr-only">
+              Filter Kategori
+            </label>
+            <select
+              id="filter-category"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="input-clay text-xs font-medium"
+            >
+              <option value="all">Semua Kategori Pekerjaan</option>
+              {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-xl border border-cool-mist bg-paper-white text-ink-black text-xs font-medium"
-          >
-            <option value="all">Semua Kategori</option>
-            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label htmlFor="filter-status" className="sr-only">
+              Filter Status
+            </label>
+            <select
+              id="filter-status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="input-clay text-xs font-medium"
+            >
+              <option value="all">Semua Status Penyelesaian</option>
+              <option value="planned">Direncanakan</option>
+              <option value="in_progress">Sedang Berjalan</option>
+              <option value="done">Selesai</option>
+              <option value="blocked">Terkendala</option>
+              <option value="carried_over">Dialihkan</option>
+            </select>
+          </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-xl border border-cool-mist bg-paper-white text-ink-black text-xs font-medium"
-          >
-            <option value="all">Semua Status</option>
-            <option value="planned">Direncanakan</option>
-            <option value="in_progress">Sedang Berjalan</option>
-            <option value="done">Selesai</option>
-            <option value="blocked">Terkendala</option>
-            <option value="carried_over">Dialihkan</option>
-          </select>
-
-          <select
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-xl border border-cool-mist bg-paper-white text-ink-black text-xs font-medium"
-          >
-            <option value="all">Semua Proyek</option>
-            {INITIAL_PROJECTS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-
-          <span className="ml-auto text-stone-gray font-medium">
-            {filteredActivities.length} aktivitas ditampilkan
-          </span>
+          <div>
+            <label htmlFor="filter-project" className="sr-only">
+              Filter Proyek
+            </label>
+            <select
+              id="filter-project"
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+              className="input-clay text-xs font-medium"
+            >
+              <option value="all">Semua Proyek & Entitas</option>
+              {INITIAL_PROJECTS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Activities List */}
+        {/* Activities Ledger */}
         {filteredActivities.length === 0 ? (
-          <div className="p-12 rounded-[24px] bg-paper-white border border-sand-border text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-warm-cream border border-sand-border flex items-center justify-center mx-auto text-stone-gray">
-              <CalendarCheck className="w-6 h-6" />
+          <div className="card-clay p-12 text-center space-y-3">
+            <div className="w-11 h-11 rounded-xl bg-warm-cream border border-sand-border flex items-center justify-center mx-auto text-stone-gray">
+              <CalendarCheck className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-base text-ink-black">Belum Ada Aktivitas</h3>
-            <p className="text-xs text-stone-gray max-w-sm mx-auto">
-              Tidak ada aktivitas yang sesuai dengan kriteria filter tanggal dan PIC saat ini.
+            <h2 className="font-bold text-base text-ink-black">
+              Belum Ada Aktivitas Tercatat
+            </h2>
+            <p className="text-xs text-stone-gray max-w-md mx-auto leading-relaxed">
+              Mulai catat pekerjaan harian untuk PIC yang dipilih agar rekapitulasi produktivitas dan laporan mingguan terisi secara otomatis.
             </p>
-            <button
-              onClick={() => setIsAddOpen(true)}
-              className="btn-pill-primary text-xs inline-flex items-center gap-1.5 mt-2"
-            >
-              <span>+ Tambah Aktivitas Sekarang</span>
-            </button>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setIsAddOpen(true)}
+                className="btn-pill-primary"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Aktivitas Pertama</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
             {filteredActivities.map((act) => {
               const statusCfg = STATUS_CONFIG[act.status];
               return (
-                <div
+                <article
                   key={act.id}
-                  className="p-5 rounded-[20px] bg-paper-white border border-sand-border hover:border-ink-black transition space-y-3"
+                  className="card-clay p-5 hover:border-ink-black space-y-3"
                 >
-                  {/* Top Bar of Card */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusCfg.badgeClass}`}
                       >
-                        {statusCfg.label}
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotClass}`} />
+                        <span>{statusCfg.label}</span>
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-warm-cream border border-sand-border text-stone-gray">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-warm-cream border border-sand-border text-stone-gray">
                         {CATEGORY_LABELS[act.category]}
                       </span>
                       {act.project && (
-                        <span className="text-xs text-stone-gray font-medium flex items-center gap-1">
-                          <Building2 className="w-3.5 h-3.5" />
+                        <span className="text-xs text-stone-gray font-medium inline-flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5 text-ash-gray" />
                           <span>{act.project.name}</span>
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-stone-gray">
-                      <span className="font-semibold text-ink-black flex items-center gap-1">
-                        <User className="w-3.5 h-3.5" />
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-stone-gray">
+                      <span className="font-semibold text-ink-black inline-flex items-center gap-1">
+                        <User className="w-3.5 h-3.5 text-ash-gray" />
                         <span>{act.pic?.full_name}</span>
                       </span>
-                      <span>•</span>
-                      <span>{act.activity_date}</span>
+                      <span aria-hidden="true">•</span>
+                      <span className="metric-mono">{act.activity_date}</span>
                       {act.duration_minutes && (
                         <>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{act.duration_minutes} menit</span>
+                          <span aria-hidden="true">•</span>
+                          <span className="metric-mono inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-ash-gray" />
+                            <span>{act.duration_minutes}m</span>
                           </span>
                         </>
                       )}
                     </div>
                   </div>
 
-                  {/* Title & Description */}
                   <div>
                     <h3 className="text-base font-bold text-ink-black">{act.title}</h3>
                     {act.description && (
-                      <p className="text-xs text-stone-gray mt-1 leading-relaxed">
+                      <p className="text-xs text-stone-gray mt-1 leading-relaxed max-w-[75ch]">
                         {act.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Notes & Output Link */}
                   {(act.notes || act.output_url) && (
                     <div className="p-3 rounded-xl bg-warm-cream border border-sand-border text-xs space-y-1.5">
                       {act.notes && (
-                        <p className="text-stone-gray">
-                          <strong className="text-ink-black">Catatan Hasil:</strong> {act.notes}
+                        <p className="text-slate-gray">
+                          <strong className="font-semibold text-ink-black">Catatan:</strong>{' '}
+                          {act.notes}
                         </p>
                       )}
                       {act.output_url && (
@@ -421,292 +448,281 @@ export default function ActivitiesPage() {
                           className="inline-flex items-center gap-1 text-violet-pulse font-semibold hover:underline"
                         >
                           <ExternalLink className="w-3 h-3" />
-                          <span>Lihat Output / Bukti Konten</span>
+                          <span>Buka Tautan Output</span>
                         </a>
                       )}
                     </div>
                   )}
 
-                  {/* Leader Note Banner */}
-                  {act.leader_note ? (
-                    <div className="p-3 rounded-xl bg-purple-50 border border-purple-200 text-xs flex items-start gap-2.5 text-purple-950">
-                      <MessageSquare className="w-4 h-4 text-purple-700 flex-shrink-0 mt-0.5" />
+                  {act.leader_note && (
+                    <div className="p-3.5 rounded-xl bg-warm-cream border border-ink-black/25 text-xs flex items-start gap-2.5 text-ink-black">
+                      <MessageSquare className="w-4 h-4 text-violet-pulse shrink-0 mt-0.5" />
                       <div>
-                        <strong className="font-semibold block text-[11px] text-purple-800 uppercase tracking-wider">
-                          Catatan Supervisor / Leader (Ferry):
+                        <strong className="font-bold block text-[11px] uppercase tracking-[0.05em] text-stone-gray">
+                          Evaluasi Supervisor (Ferry):
                         </strong>
-                        <p className="mt-0.5">{act.leader_note}</p>
+                        <p className="mt-0.5 leading-relaxed">{act.leader_note}</p>
                       </div>
                     </div>
-                  ) : null}
+                  )}
 
-                  {/* Action Bar */}
-                  <div className="pt-2 border-t border-cool-mist flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      {/* Carry over button */}
+                  <div className="pt-3 border-t border-sand-border flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
+                        type="button"
                         onClick={() => handleCarryOver(act)}
-                        className="px-3 py-1 rounded-full border border-sand-border text-stone-gray hover:text-ink-black hover:bg-warm-cream text-xs font-semibold inline-flex items-center gap-1.5 transition"
-                        title="Alihkan ke jadwal besok"
+                        className="btn-pill-ghost text-xs py-1.5 px-3 min-h-9"
                       >
-                        <RotateCcw className="w-3 h-3" />
+                        <RotateCcw className="w-3.5 h-3.5" />
                         <span>Carry Over ke Besok</span>
                       </button>
 
-                      {/* Status quick toggle */}
                       {act.status !== 'done' && (
                         <button
+                          type="button"
                           onClick={() =>
                             setActivities(
-                              activities.map((a) => (a.id === act.id ? { ...a, status: 'done' } : a))
+                              activities.map((a) =>
+                                a.id === act.id ? { ...a, status: 'done' } : a
+                              )
                             )
                           }
-                          className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold hover:bg-emerald-100 transition inline-flex items-center gap-1"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full bg-forest-surface text-forest border border-forest-border text-xs font-semibold hover:opacity-90 transition-opacity"
                         >
-                          <CheckCircle2 className="w-3 h-3" />
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Tandai Selesai</span>
                         </button>
                       )}
                     </div>
 
-                    {/* Leader Note trigger */}
                     <button
+                      type="button"
                       onClick={() => {
                         setNoteModalActivity(act);
                         setLeaderNoteText(act.leader_note || '');
                       }}
-                      className="text-xs font-semibold text-stone-gray hover:text-ink-black underline decoration-sand-border underline-offset-4"
+                      className="text-xs font-semibold text-stone-gray hover:text-ink-black underline underline-offset-4 py-1.5 px-2"
                     >
-                      {act.leader_note ? 'Edit Catatan Leader' : '+ Beri Catatan Leader'}
+                      {act.leader_note ? 'Edit Catatan Supervisor' : '+ Catatan Supervisor'}
                     </button>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
         )}
 
-        {/* Modal: Quick Add Activity */}
-        {isAddOpen && (
-          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-paper-white border border-sand-border rounded-[28px] max-w-lg w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-sand-border mb-4">
-                <h3 className="font-bold text-base text-ink-black">Catat Aktivitas Harian</h3>
-                <button
-                  onClick={() => setIsAddOpen(false)}
-                  className="p-1 rounded-full text-stone-gray hover:text-ink-black"
+        {/* Modal: Create Activity */}
+        <Modal
+          open={isAddOpen}
+          onClose={() => setIsAddOpen(false)}
+          title="Catat Aktivitas Harian"
+          subtitle="Dokumentasikan tugas harian dan tautan hasil kerja tim."
+        >
+          <form onSubmit={handleCreateActivity} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Judul Tugas / Aktivitas *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Contoh: Produksi Video Reels Update Pembangunan"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="input-clay"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  PIC Penanggung Jawab *
+                </label>
+                <select
+                  value={formData.pic_id}
+                  onChange={(e) => setFormData({ ...formData, pic_id: e.target.value })}
+                  className="input-clay text-xs font-semibold"
                 >
-                  <X className="w-5 h-5" />
-                </button>
+                  <option value={INITIAL_PROFILES[0].id}>Ferry (Leader)</option>
+                  <option value={INITIAL_PROFILES[1].id}>Ziyad (Sr. Officer)</option>
+                </select>
               </div>
 
-              <form onSubmit={handleCreateActivity} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-gray uppercase tracking-wider mb-1">
-                    Judul Tugas / Aktivitas *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Produksi Video Reels Promo SP3K"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-cool-mist text-sm font-medium focus:outline-none focus:border-ink-black"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      PIC Penanggung Jawab *
-                    </label>
-                    <select
-                      value={formData.pic_id}
-                      onChange={(e) => setFormData({ ...formData, pic_id: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold focus:outline-none"
-                    >
-                      <option value={INITIAL_PROFILES[0].id}>Ferry (Leader)</option>
-                      <option value={INITIAL_PROFILES[1].id}>Ziyad (Sr. Officer)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Kategori Aktivitas *
-                    </label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) =>
-                        setFormData({ ...formData, category: e.target.value as ActivityCategory })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold focus:outline-none"
-                    >
-                      {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Proyek Terkait
-                    </label>
-                    <select
-                      value={formData.project_id}
-                      onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold focus:outline-none"
-                    >
-                      <option value="">Semua / Umum</option>
-                      {INITIAL_PROJECTS.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Status Awal
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) =>
-                        setFormData({ ...formData, status: e.target.value as ActivityStatus })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs font-semibold focus:outline-none"
-                    >
-                      <option value="planned">Direncanakan</option>
-                      <option value="in_progress">Sedang Berjalan</option>
-                      <option value="done">Selesai</option>
-                      <option value="blocked">Terkendala</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-gray mb-1">
-                    Deskripsi Ringkas
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Penjelasan detail pekerjaan atau kendala..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-cool-mist text-xs focus:outline-none focus:border-ink-black"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Estimasi Durasi (Menit)
-                    </label>
-                    <input
-                      type="number"
-                      min="10"
-                      step="10"
-                      value={formData.duration_minutes}
-                      onChange={(e) =>
-                        setFormData({ ...formData, duration_minutes: Number(e.target.value) })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-gray mb-1">
-                      Tautan Output / Link
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      value={formData.output_url}
-                      onChange={(e) => setFormData({ ...formData, output_url: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-cool-mist text-xs focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddOpen(false)}
-                    className="flex-1 py-2.5 rounded-full border border-sand-border text-xs font-semibold text-stone-gray"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 rounded-full bg-ink-black text-paper-white text-xs font-semibold hover:opacity-90"
-                  >
-                    Simpan Aktivitas
-                  </button>
-                </div>
-              </form>
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Kategori Aktivitas *
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      category: e.target.value as ActivityCategory,
+                    })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
-        )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Proyek Terkait
+                </label>
+                <select
+                  value={formData.project_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, project_id: e.target.value })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  <option value="">Semua / Korporat</option>
+                  {INITIAL_PROJECTS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Status Penyelesaian
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as ActivityStatus,
+                    })
+                  }
+                  className="input-clay text-xs font-semibold"
+                >
+                  <option value="planned">Direncanakan</option>
+                  <option value="in_progress">Sedang Berjalan</option>
+                  <option value="done">Selesai</option>
+                  <option value="blocked">Terkendala</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1">
+                Deskripsi Ringkas
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Rincian pengerjaan atau catatan lapangan..."
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="input-clay"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Estimasi Durasi (Menit)
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  step="10"
+                  value={formData.duration_minutes}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      duration_minutes: Number(e.target.value),
+                    })
+                  }
+                  className="input-clay metric-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-black mb-1">
+                  Tautan Output / Bukti Kerja
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={formData.output_url}
+                  onChange={(e) =>
+                    setFormData({ ...formData, output_url: e.target.value })
+                  }
+                  className="input-clay"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsAddOpen(false)}
+                className="btn-pill-ghost"
+              >
+                Batal
+              </button>
+              <button type="submit" className="btn-pill-primary">
+                Simpan Aktivitas
+              </button>
+            </div>
+          </form>
+        </Modal>
 
         {/* Modal: Leader Note */}
-        {noteModalActivity && (
-          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-paper-white border border-sand-border rounded-[28px] max-w-md w-full p-6 shadow-xl">
-              <div className="flex items-center justify-between pb-3 border-b border-sand-border mb-3">
-                <h3 className="font-bold text-sm text-ink-black">Catatan Evaluasi Leader</h3>
-                <button
-                  onClick={() => setNoteModalActivity(null)}
-                  className="p-1 rounded-full text-stone-gray hover:text-ink-black"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="mb-3 p-2.5 rounded-xl bg-warm-cream border border-sand-border text-xs">
-                <span className="text-ash-gray block text-[10px] uppercase font-semibold">Tugas:</span>
-                <span className="font-semibold text-ink-black">{noteModalActivity.title}</span>
-                <span className="text-stone-gray block mt-0.5">PIC: {noteModalActivity.pic?.full_name}</span>
-              </div>
-
-              <form onSubmit={handleSaveLeaderNote} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-gray mb-1">
-                    Instruksi / Feedback Leader
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Tuliskan arahan, revisi, atau apresiasi untuk petugas..."
-                    value={leaderNoteText}
-                    onChange={(e) => setLeaderNoteText(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-cool-mist text-xs focus:outline-none focus:border-ink-black"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNoteModalActivity(null)}
-                    className="flex-1 py-2 rounded-full border border-sand-border text-xs font-semibold text-stone-gray"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-2 rounded-full bg-ink-black text-paper-white text-xs font-semibold hover:opacity-90 flex items-center justify-center gap-1.5"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Simpan Catatan</span>
-                  </button>
-                </div>
-              </form>
+        <Modal
+          open={Boolean(noteModalActivity)}
+          onClose={() => setNoteModalActivity(null)}
+          title="Catatan Evaluasi Supervisor"
+          subtitle={
+            noteModalActivity
+              ? `${noteModalActivity.title} (${noteModalActivity.pic?.full_name})`
+              : undefined
+          }
+          maxWidthClass="max-w-md"
+        >
+          <form onSubmit={handleSaveLeaderNote} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-ink-black mb-1.5">
+                Arahan / Feedback Supervisor
+              </label>
+              <textarea
+                rows={4}
+                required
+                placeholder="Tuliskan catatan evaluasi, revisi, atau tindak lanjut..."
+                value={leaderNoteText}
+                onChange={(e) => setLeaderNoteText(e.target.value)}
+                className="input-clay"
+              />
             </div>
-          </div>
-        )}
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setNoteModalActivity(null)}
+                className="btn-pill-ghost"
+              >
+                Batal
+              </button>
+              <button type="submit" className="btn-pill-primary">
+                <Send className="w-3.5 h-3.5" />
+                <span>Simpan Catatan</span>
+              </button>
+            </div>
+          </form>
+        </Modal>
       </div>
     </AppShell>
   );

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   INITIAL_PROJECTS,
   INITIAL_UNIT_SNAPSHOTS,
@@ -10,14 +11,25 @@ import {
 } from '@/lib/data/seed-data';
 import { Project, UnitSnapshot, KosSnapshot } from '@/lib/types/database';
 import {
-  Building2,
   AlertTriangle,
-  ChevronRight,
+  ArrowRight,
+  CheckCircle2,
+  LayoutGrid,
+  MapPin,
+  Table2,
 } from 'lucide-react';
 import { InstagramIcon } from '@/components/shared/icons';
 
 export default function ProjectsPage() {
   const [filter, setFilter] = useState<'all' | 'active_project' | 'business_unit' | 'upcoming'>('all');
+  const [displayMode, setDisplayMode] = useState<'cards' | 'table'>('cards');
+
+  const counts = {
+    all: INITIAL_PROJECTS.length,
+    active_project: INITIAL_PROJECTS.filter((p) => p.kind === 'active_project').length,
+    business_unit: INITIAL_PROJECTS.filter((p) => p.kind === 'business_unit').length,
+    upcoming: INITIAL_PROJECTS.filter((p) => p.kind === 'upcoming').length,
+  };
 
   const filteredProjects = INITIAL_PROJECTS.filter((p) => {
     if (filter === 'all') return true;
@@ -38,12 +50,19 @@ export default function ProjectsPage() {
       latest.hold_manajemen;
 
     const unallocated = project.total_units - allocated;
+    const sold = latest.akad_kredit + latest.cash_keras;
+    const pipeline = latest.booking + latest.sp3k;
 
     return {
       latest,
       allocated,
       unallocated,
-      persenTerjual: Math.round(((latest.akad_kredit + latest.cash_keras) / project.total_units) * 100),
+      sold,
+      pipeline,
+      persenTerjual:
+        project.total_units > 0
+          ? Math.round((sold / project.total_units) * 100)
+          : 0,
     };
   };
 
@@ -52,278 +71,406 @@ export default function ProjectsPage() {
     const latest = snapshots[0] as KosSnapshot | undefined;
     if (!latest) return null;
 
-    const occupancyRate = Math.round((latest.terisi / project.total_units) * 100);
+    const occupancyRate =
+      project.total_units > 0
+        ? Math.round((latest.terisi / project.total_units) * 100)
+        : 0;
     return {
       latest,
       occupancyRate,
     };
   };
 
+  // Separate projects requiring inventory reconciliation (e.g. Samudera Residence) so the regular grid never exceeds 6 cards (R-06)
+  const attentionProjects = filteredProjects.filter((p) => {
+    if (p.kind !== 'active_project') return false;
+    const m = getHousingMetrics(p);
+    return m && m.unallocated !== 0;
+  });
+
+  const standardProjects = filteredProjects.filter(
+    (p) => !attentionProjects.some((ap) => ap.id === p.id)
+  );
+
   return (
     <AppShell>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-sand-border">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warm-cream border border-sand-border text-xs text-stone-gray font-medium mb-1.5">
-              <Building2 className="w-3.5 h-3.5 text-ink-black" />
-              <span>Inventori Real Estat Sedaya</span>
+      <div className="space-y-7">
+        <PageHeader
+          section="Portofolio & Inventaris"
+          meta={<span>{INITIAL_PROJECTS.length} Entitas Terdaftar</span>}
+          title="Proyek & Rekonsiliasi Unit"
+          description="Pantau posisi stok unit perumahan subsidi, progres KPR (Booking, SP3K, Akad), dan rekonsiliasi kapasitas master di Medan & Deli Serdang."
+          actions={
+            <div className="inline-flex items-center p-1 rounded-full bg-warm-cream border border-sand-border">
+              <button
+                type="button"
+                onClick={() => setDisplayMode('cards')}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
+                  displayMode === 'cards'
+                    ? 'bg-ink-black text-paper-white'
+                    : 'text-stone-gray hover:text-ink-black'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Kartu Portofolio</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDisplayMode('table')}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
+                  displayMode === 'table'
+                    ? 'bg-ink-black text-paper-white'
+                    : 'text-stone-gray hover:text-ink-black'
+                }`}
+              >
+                <Table2 className="w-3.5 h-3.5" />
+                <span>Tabel Rekonsiliasi</span>
+              </button>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink-black">
-              Proyek & Inventori Unit
-            </h1>
-            <p className="text-sm text-stone-gray">
-              Kelola status funnel perumahan subsidi, okupansi kos, dan proyek mendatang di Deli Serdang & Medan.
-            </p>
+          }
+        />
+
+        {/* Filter Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-2xl bg-warm-cream border border-sand-border">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setFilter('all')}
+              className={`px-3.5 py-2 min-h-10 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'all'
+                  ? 'bg-ink-black text-paper-white'
+                  : 'text-stone-gray hover:text-ink-black hover:bg-paper-white'
+              }`}
+            >
+              Semua Entitas ({counts.all})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter('active_project')}
+              className={`px-3.5 py-2 min-h-10 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'active_project'
+                  ? 'bg-ink-black text-paper-white'
+                  : 'text-stone-gray hover:text-ink-black hover:bg-paper-white'
+              }`}
+            >
+              Perumahan Aktif ({counts.active_project})
+            </button>
+            {counts.business_unit > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilter('business_unit')}
+                className={`px-3.5 py-2 min-h-10 rounded-full text-xs font-semibold transition-colors ${
+                  filter === 'business_unit'
+                    ? 'bg-ink-black text-paper-white'
+                    : 'text-stone-gray hover:text-ink-black hover:bg-paper-white'
+                }`}
+              >
+                Unit Korporat / Bisnis ({counts.business_unit})
+              </button>
+            )}
+            {counts.upcoming > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilter('upcoming')}
+                className={`px-3.5 py-2 min-h-10 rounded-full text-xs font-semibold transition-colors ${
+                  filter === 'upcoming'
+                    ? 'bg-ink-black text-paper-white'
+                    : 'text-stone-gray hover:text-ink-black hover:bg-paper-white'
+                }`}
+              >
+                Pengembangan Baru ({counts.upcoming})
+              </button>
+            )}
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto p-1 bg-warm-cream border border-sand-border rounded-full self-start sm:self-auto">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                filter === 'all'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
-                  : 'text-stone-gray hover:text-ink-black'
-              }`}
-            >
-              Semua ({INITIAL_PROJECTS.length})
-            </button>
-            <button
-              onClick={() => setFilter('active_project')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                filter === 'active_project'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
-                  : 'text-stone-gray hover:text-ink-black'
-              }`}
-            >
-              Perumahan Aktif (5)
-            </button>
-            <button
-              onClick={() => setFilter('business_unit')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                filter === 'business_unit'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
-                  : 'text-stone-gray hover:text-ink-black'
-              }`}
-            >
-              Unit Bisnis (1)
-            </button>
-            <button
-              onClick={() => setFilter('upcoming')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                filter === 'upcoming'
-                  ? 'bg-ink-black text-paper-white shadow-xs'
-                  : 'text-stone-gray hover:text-ink-black'
-              }`}
-            >
-              Mendatang (2)
-            </button>
-          </div>
+          <span className="text-xs text-stone-gray px-2 font-medium">
+            Menampilkan <strong className="metric-mono text-ink-black">{filteredProjects.length}</strong> entitas
+          </span>
         </div>
 
-        {/* Project Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredProjects.map((project) => {
-            const isHousing = project.kind === 'active_project';
-            const isKos = project.kind === 'business_unit';
-            const isUpcoming = project.kind === 'upcoming';
-            const housing = isHousing ? getHousingMetrics(project) : null;
-            const kos = isKos ? getKosMetrics(project) : null;
+        {/* Priority Reconciliation Callout Section (Samudera Residence Unallocated = 3) */}
+        {attentionProjects.map((project) => {
+          const metrics = getHousingMetrics(project);
+          if (!metrics) return null;
 
-            return (
-              <div
-                key={project.id}
-                className="bg-paper-white border border-sand-border rounded-[24px] p-5 flex flex-col justify-between hover:border-ink-black transition-all group"
-              >
-                <div>
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1.5 ${
-                          isHousing
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+          return (
+            <section
+              key={project.id}
+              aria-label={`Rekonsiliasi Prioritas ${project.name}`}
+              className="p-5 sm:p-6 rounded-2xl bg-ember-surface border border-ember-border flex flex-col lg:flex-row lg:items-center justify-between gap-5"
+            >
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-paper-white border border-ember-border text-ember-orange text-xs font-bold">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Perlu Rekonsiliasi Kapasitas Unit</span>
+                </div>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h2 className="text-xl font-bold text-ink-black">
+                    {project.name}
+                  </h2>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-stone-gray">
+                    <MapPin className="w-3.5 h-3.5 text-ash-gray" />
+                    <span>{project.location}</span>
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-gray leading-relaxed">
+                  Kapasitas master proyek tercatat <strong className="metric-mono font-bold">{project.total_units} {project.unit_label}</strong>, sedangkan total unit yang teralokasi pada status snapshot saat ini adalah <strong className="metric-mono font-bold">{metrics.allocated} {project.unit_label}</strong>. Terdapat selisih <strong className="metric-mono font-bold text-ember-orange">{metrics.unallocated} {project.unit_label} (Unallocated)</strong> yang wajib diverifikasi.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+                <div className="grid grid-cols-3 gap-2 bg-paper-white p-2.5 rounded-xl border border-ember-border text-center min-w-[230px]">
+                  <div>
+                    <span className="text-[10px] font-semibold uppercase text-ash-gray block">
+                      Master
+                    </span>
+                    <span className="metric-mono text-base font-bold text-ink-black">
+                      {project.total_units}
+                    </span>
+                  </div>
+                  <div className="border-x border-sand-border px-2">
+                    <span className="text-[10px] font-semibold uppercase text-ash-gray block">
+                      Teralokasi
+                    </span>
+                    <span className="metric-mono text-base font-bold text-ink-black">
+                      {metrics.allocated}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-ember-orange block">
+                      Selisih
+                    </span>
+                    <span className="metric-mono text-base font-bold text-ember-orange">
+                      {metrics.unallocated}
+                    </span>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/projects/${project.slug}`}
+                  className="btn-pill-primary min-h-11 px-5 shrink-0"
+                >
+                  <span>Buka & Rekonsiliasi</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </section>
+          );
+        })}
+
+        {/* Display Mode: Cards Grid (Strictly <= 6 Cards, <= 3 Data Points per Card) */}
+        {displayMode === 'cards' ? (
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {standardProjects.map((project) => {
+              const isHousing = project.kind === 'active_project';
+              const isKos = project.kind === 'business_unit';
+              const housing = isHousing ? getHousingMetrics(project) : null;
+              const kos = isKos ? getKosMetrics(project) : null;
+
+              return (
+                <article
+                  key={project.id}
+                  className="card-clay p-5 flex flex-col justify-between hover:border-ink-black"
+                >
+                  <div className="space-y-4">
+                    {/* Data Point 1: Identity & Location */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.05em] text-ash-gray mb-1">
+                          {isHousing
+                            ? 'Perumahan Subsidi'
                             : isKos
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
-                        }`}
-                      >
-                        {isHousing
-                          ? 'Perumahan Subsidi'
-                          : isKos
-                          ? 'Unit Bisnis (Kos)'
-                          : 'Proyek Mendatang (2026/27)'}
-                      </span>
-                      <h2 className="text-lg font-bold text-ink-black group-hover:text-violet-pulse transition leading-snug">
-                        {project.name}
-                      </h2>
-                      <p className="text-xs text-stone-gray font-medium flex items-center gap-1 mt-0.5">
-                        <span>📍 {project.location}</span>
-                        <span>•</span>
-                        <span>{project.total_units} {project.unit_label}</span>
-                      </p>
+                            ? 'Entitas Korporat'
+                            : 'Pengembangan Baru'}
+                        </span>
+                        <h2 className="text-lg font-bold text-ink-black truncate">
+                          {project.name}
+                        </h2>
+                        <p className="text-xs text-stone-gray flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3.5 h-3.5 text-ash-gray shrink-0" />
+                          <span className="truncate">{project.location}</span>
+                        </p>
+                      </div>
+
+                      {project.instagram_handle && (
+                        <a
+                          href={`https://instagram.com/${project.instagram_handle}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Instagram ${project.name}`}
+                          className="min-w-9 min-h-9 rounded-full bg-warm-cream border border-sand-border flex items-center justify-center text-stone-gray hover:text-ink-black hover:border-ink-black transition-colors shrink-0"
+                        >
+                          <InstagramIcon className="w-4 h-4" />
+                        </a>
+                      )}
                     </div>
 
-                    {project.instagram_handle && (
-                      <a
-                        href={`https://instagram.com/${project.instagram_handle}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={`@${project.instagram_handle}`}
-                        className="p-1.5 rounded-full bg-warm-cream border border-sand-border text-stone-gray hover:text-pink-600 transition"
-                      >
-                        <InstagramIcon className="w-4 h-4" />
-                      </a>
+                    {/* Data Point 2: Primary Progress Bar & Realization Metric */}
+                    {housing && housing.latest && (
+                      <div className="p-3.5 rounded-xl bg-warm-cream border border-sand-border space-y-2.5">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-xs font-medium text-stone-gray">
+                            Realisasi Terjual
+                          </span>
+                          <span className="metric-mono text-sm font-bold text-ink-black">
+                            {housing.sold} / {project.total_units} unit ({housing.persenTerjual}%)
+                          </span>
+                        </div>
+
+                        <div className="w-full h-2 rounded-full bg-paper-white border border-sand-border overflow-hidden flex">
+                          <div
+                            style={{
+                              width: `${Math.round((housing.sold / project.total_units) * 100)}%`,
+                            }}
+                            className="bg-ink-black h-full"
+                          />
+                          <div
+                            style={{
+                              width: `${Math.round((housing.pipeline / project.total_units) * 100)}%`,
+                            }}
+                            className="bg-violet-pulse h-full"
+                          />
+                        </div>
+
+                        {/* Data Point 3: Compact Pipeline Summary Line */}
+                        <div className="pt-1 flex items-center justify-between text-[11px] text-stone-gray metric-mono">
+                          <span>Tersedia: {housing.latest.belum_terjual}</span>
+                          <span>Proses KPR: {housing.pipeline}</span>
+                          <span>Hold: {housing.latest.hold_manajemen}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Corporate / Business Unit Card Body */}
+                    {isKos && (
+                      <div className="p-3.5 rounded-xl bg-warm-cream border border-sand-border space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-stone-gray font-medium">Peran Entitas</span>
+                          <span className="font-semibold text-ink-black">Holding & Brand Induk</span>
+                        </div>
+                        {kos && kos.latest ? (
+                          <p className="text-xs text-stone-gray metric-mono">
+                            Okupansi: {kos.latest.terisi} / {project.total_units} ({kos.occupancyRate}%)
+                          </p>
+                        ) : (
+                          <p className="text-xs text-stone-gray">
+                            Pusat komunikasi korporat, portal web utama, dan kanal resmi grup.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
 
-                  {/* Unallocated Warning Alert if not zero */}
-                  {housing && housing.unallocated !== 0 && (
-                    <div className="mb-4 p-2.5 rounded-xl bg-amber-50 border border-amber-300 flex items-center gap-2 text-amber-900 text-xs font-semibold animate-pulse">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <span>
-                        Unallocated: {housing.unallocated} {project.unit_label} belum dialokasikan!
-                      </span>
-                    </div>
-                  )}
+                  <div className="pt-4 mt-4 border-t border-sand-border flex items-center justify-between">
+                    <span className="metric-mono text-xs font-semibold text-stone-gray">
+                      Kapasitas: {project.total_units} {project.unit_label}
+                    </span>
+                    <Link
+                      href={`/projects/${project.slug}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-black hover:text-violet-pulse transition-colors py-1"
+                    >
+                      <span>Rincian Funnel</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        ) : (
+          /* Display Mode: Full 7-Project Reconciliation Table */
+          <section className="card-clay p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-sand-border bg-warm-cream text-[11px] font-semibold uppercase tracking-[0.05em] text-ash-gray">
+                    <th className="py-3.5 px-5">Nama Proyek</th>
+                    <th className="py-3.5 px-4">Lokasi</th>
+                    <th className="py-3.5 px-3 text-right">Master</th>
+                    <th className="py-3.5 px-3 text-right">Tersedia</th>
+                    <th className="py-3.5 px-3 text-right">Booking</th>
+                    <th className="py-3.5 px-3 text-right">SP3K</th>
+                    <th className="py-3.5 px-3 text-right">Akad</th>
+                    <th className="py-3.5 px-3 text-right">Cash</th>
+                    <th className="py-3.5 px-3 text-right">Hold</th>
+                    <th className="py-3.5 px-4 text-right">Rekonsiliasi</th>
+                    <th className="py-3.5 px-5 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-sand-border text-xs">
+                  {filteredProjects.map((project) => {
+                    const housing =
+                      project.kind === 'active_project'
+                        ? getHousingMetrics(project)
+                        : null;
+                    const snap = housing?.latest;
 
-                  {/* Housing Inventory Status Snapshot */}
-                  {housing && housing.latest && (
-                    <div className="space-y-3 my-3 pt-2 border-t border-cool-mist">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-stone-gray font-medium">Realisasi (Akad + Cash):</span>
-                        <span className="font-bold text-ink-black">
-                          {housing.latest.akad_kredit + housing.latest.cash_keras} / {project.total_units} ({housing.persenTerjual}%)
-                        </span>
-                      </div>
-
-                      {/* Mini Funnel Progress Bar */}
-                      <div className="w-full h-2.5 rounded-full bg-cool-mist overflow-hidden flex">
-                        <div
-                          style={{
-                            width: `${Math.round(((housing.latest.akad_kredit + housing.latest.cash_keras) / project.total_units) * 100)}%`,
-                          }}
-                          className="bg-emerald-600 h-full"
-                          title="Akad & Cash"
-                        />
-                        <div
-                          style={{
-                            width: `${Math.round((housing.latest.sp3k / project.total_units) * 100)}%`,
-                          }}
-                          className="bg-sky-500 h-full"
-                          title="SP3K"
-                        />
-                        <div
-                          style={{
-                            width: `${Math.round((housing.latest.booking / project.total_units) * 100)}%`,
-                          }}
-                          className="bg-amber-400 h-full"
-                          title="Booking"
-                        />
-                        <div
-                          style={{
-                            width: `${Math.round((housing.latest.hold_manajemen / project.total_units) * 100)}%`,
-                          }}
-                          className="bg-rose-400 h-full"
-                          title="Hold Manajemen"
-                        />
-                      </div>
-
-                      {/* Status Badges Grid */}
-                      <div className="grid grid-cols-3 gap-1.5 text-[11px] pt-1">
-                        <div className="p-1.5 rounded-lg bg-warm-cream border border-sand-border text-center">
-                          <span className="text-ash-gray block text-[10px]">Tersedia</span>
-                          <span className="font-bold text-ink-black">{housing.latest.belum_terjual}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-warm-cream border border-sand-border text-center">
-                          <span className="text-ash-gray block text-[10px]">Booking</span>
-                          <span className="font-bold text-ink-black">{housing.latest.booking}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-warm-cream border border-sand-border text-center">
-                          <span className="text-ash-gray block text-[10px]">SP3K</span>
-                          <span className="font-bold text-ink-black">{housing.latest.sp3k}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-center text-emerald-900">
-                          <span className="block text-[10px]">Akad Kredit</span>
-                          <span className="font-bold">{housing.latest.akad_kredit}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-warm-cream border border-sand-border text-center">
-                          <span className="text-ash-gray block text-[10px]">Cash Keras</span>
-                          <span className="font-bold text-ink-black">{housing.latest.cash_keras}</span>
-                        </div>
-                        <div className="p-1.5 rounded-lg bg-warm-cream border border-sand-border text-center">
-                          <span className="text-ash-gray block text-[10px]">Hold</span>
-                          <span className="font-bold text-ink-black">{housing.latest.hold_manajemen}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Kos Status Snapshot */}
-                  {kos && kos.latest && (
-                    <div className="space-y-3 my-3 pt-2 border-t border-cool-mist">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-stone-gray font-medium">Tingkat Okupansi:</span>
-                        <span className="font-bold text-emerald-700">{kos.occupancyRate}%</span>
-                      </div>
-                      <div className="w-full h-2 rounded-full bg-cool-mist overflow-hidden">
-                        <div
-                          style={{ width: `${kos.occupancyRate}%` }}
-                          className="bg-emerald-600 h-full rounded-full"
-                        />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-[11px] pt-1">
-                        <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-                          <span className="text-emerald-700 block text-[10px]">Terisi</span>
-                          <span className="font-bold text-emerald-900 text-sm">{kos.latest.terisi}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-warm-cream border border-sand-border text-center">
-                          <span className="text-stone-gray block text-[10px]">Kosong</span>
-                          <span className="font-bold text-ink-black text-sm">{kos.latest.belum_terisi}</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-center">
-                          <span className="text-amber-800 block text-[10px]">Hold/Book</span>
-                          <span className="font-bold text-amber-900 text-sm">{kos.latest.booking_hold}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Upcoming Project Details */}
-                  {isUpcoming && (
-                    <div className="p-3 my-3 rounded-2xl bg-warm-cream border border-sand-border text-xs space-y-2">
-                      <p className="text-stone-gray">
-                        Rencana pengembangan kawasan subsidi terpadu tahap lanjutan.
-                      </p>
-                      {project.breakdown && (
-                        <div className="flex gap-2 pt-1 border-t border-sand-border">
-                          <span className="px-2 py-0.5 rounded-md bg-paper-white border border-sand-border font-medium">
-                            Ruko: {project.breakdown.ruko} unit
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-paper-white border border-sand-border font-medium">
-                            Subsidi: {project.breakdown.rumah_subsidi} unit
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Action Link */}
-                <div className="pt-4 border-t border-cool-mist mt-2">
-                  <Link
-                    href={`/projects/${project.slug}`}
-                    className="w-full py-2.5 px-4 rounded-full bg-warm-cream hover:bg-ink-black text-ink-black hover:text-paper-white border border-sand-border font-medium text-xs flex items-center justify-between transition"
-                  >
-                    <span>Detail Funnel & Riwayat</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                    return (
+                      <tr
+                        key={project.id}
+                        className="hover:bg-warm-cream/60 transition-colors"
+                      >
+                        <td className="py-3.5 px-5 font-bold text-ink-black">
+                          {project.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-stone-gray">
+                          {project.location}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono font-bold text-ink-black">
+                          {project.total_units}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono text-stone-gray">
+                          {snap ? snap.belum_terjual : '-'}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono text-stone-gray">
+                          {snap ? snap.booking : '-'}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono text-violet-pulse font-semibold">
+                          {snap ? snap.sp3k : '-'}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono text-forest font-semibold">
+                          {snap ? snap.akad_kredit : '-'}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono text-stone-gray">
+                          {snap ? snap.cash_keras : '-'}
+                        </td>
+                        <td className="py-3.5 px-3 text-right metric-mono text-stone-gray">
+                          {snap ? snap.hold_manajemen : '-'}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {housing ? (
+                            housing.unallocated !== 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-ember-surface text-ember-orange border border-ember-border metric-mono">
+                                <AlertTriangle className="w-3 h-3" />
+                                <span>{housing.unallocated} Unallocated</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-forest-surface text-forest border border-forest-border">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Seimbang</span>
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-ash-gray">Korporat</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5 text-right">
+                          <Link
+                            href={`/projects/${project.slug}`}
+                            className="inline-flex items-center gap-1 font-semibold text-ink-black hover:text-violet-pulse"
+                          >
+                            <span>Detail</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </div>
     </AppShell>
   );

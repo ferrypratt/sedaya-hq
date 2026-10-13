@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import readXlsxFile from 'read-excel-file/browser';
 import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   IMPORT_TARGETS,
   ImportTarget,
@@ -51,7 +52,6 @@ export default function ImportPage() {
   const currentTargetMeta: TargetMetadata =
     IMPORT_TARGETS.find((t) => t.id === selectedTarget) || IMPORT_TARGETS[0];
 
-  // Download CSV template
   const handleDownloadTemplate = () => {
     const blob = new Blob([currentTargetMeta.templateCsv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -64,7 +64,6 @@ export default function ImportPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Process raw records from CSV or XLSX
   const validateAndSetData = (headers: string[], rawRows: Record<string, unknown>[]) => {
     const requiredCols = currentTargetMeta.columns;
     const missing = requiredCols.filter(
@@ -107,7 +106,6 @@ export default function ImportPage() {
     setIsProcessing(false);
   };
 
-  // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -167,7 +165,6 @@ export default function ImportPage() {
     }
   };
 
-  // Reset current batch
   const handleReset = () => {
     setParsedRows(null);
     setFileName(null);
@@ -178,7 +175,6 @@ export default function ImportPage() {
     }
   };
 
-  // Execute import action
   const handleExecuteImport = (onlyValid: boolean) => {
     if (!parsedRows) return;
     const targetRows = onlyValid ? parsedRows.filter((r) => r.isValid) : parsedRows;
@@ -204,60 +200,53 @@ export default function ImportPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-7xl mx-auto pb-12">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-ink-black text-paper-white">
-                Data Management
-              </span>
-              <span className="text-xs text-stone-gray font-medium">
-                CSV / Excel Validator
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink-black">
-              Import & Validasi Data
-            </h1>
-            <p className="text-sm text-stone-gray mt-1">
-              Unggah batch data CSV/XLSX untuk inventaris unit, metrik saluran digital, aktivitas harian, rencana konten, event, dan alat peraga.
-            </p>
-          </div>
+      <div className="space-y-8 max-w-7xl mx-auto pb-12">
+        <PageHeader
+          eyebrow="Data Management • CSV / Excel Validator"
+          title="Import & Validasi Data"
+          description="Unggah batch data CSV/XLSX untuk inventaris unit, metrik saluran digital, aktivitas harian, rencana konten, event, dan alat peraga."
+          actions={
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="btn-pill-ghost text-xs"
+            >
+              <Download className="w-3.5 h-3.5 text-violet-pulse" />
+              <span>Unduh Template CSV</span>
+            </button>
+          }
+        />
 
-          <button
-            onClick={handleDownloadTemplate}
-            className="px-4 py-2 text-xs font-semibold text-ink-black bg-paper-white border border-sand-border rounded-full hover:bg-stone-50 transition-colors shadow-xs flex items-center gap-1.5 self-start sm:self-auto"
-          >
-            <Download className="w-3.5 h-3.5 text-violet-pulse" />
-            <span>Unduh Template CSV</span>
-          </button>
-        </div>
-
-        {/* Target Module Selector */}
-        <div>
-          <label className="block text-xs font-bold text-stone-gray uppercase tracking-wider mb-2">
+        {/* Step 1: Target Module Selector (<= 6 cards in grid) */}
+        <div className="space-y-2.5">
+          <span className="block text-xs font-bold text-stone-gray uppercase tracking-wider">
             1. Pilih Modul Tujuan Import:
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
             {IMPORT_TARGETS.map((target) => {
               const isSelected = selectedTarget === target.id;
               return (
                 <button
                   key={target.id}
+                  type="button"
                   onClick={() => {
                     setSelectedTarget(target.id);
                     handleReset();
                   }}
-                  className={`p-3 rounded-2xl border text-left transition-all ${
+                  className={`p-3.5 rounded-2xl border text-left transition-colors min-h-14 ${
                     isSelected
-                      ? 'bg-warm-cream border-ink-black ring-1 ring-ink-black shadow-xs'
-                      : 'bg-paper-white border-sand-border hover:border-stone-400'
+                      ? 'bg-ink-black border-ink-black text-paper-white'
+                      : 'bg-paper-white border-sand-border text-ink-black hover:border-ink-black'
                   }`}
                 >
-                  <span className="text-xs font-bold text-ink-black block line-clamp-1">
+                  <span className="text-xs font-extrabold block line-clamp-1">
                     {target.title.split(' ')[0]} {target.title.split(' ')[1] || ''}
                   </span>
-                  <span className="text-[11px] text-stone-gray line-clamp-1 mt-0.5">
+                  <span
+                    className={`text-[11px] metric-mono line-clamp-1 mt-0.5 block ${
+                      isSelected ? 'text-sand-border' : 'text-stone-gray'
+                    }`}
+                  >
                     {target.id}
                   </span>
                 </button>
@@ -266,24 +255,24 @@ export default function ImportPage() {
           </div>
         </div>
 
-        {/* Selected Target Info Strip */}
-        <div className="bg-paper-white border border-sand-border rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-xs">
+        {/* Step 2: Selected Target Schema Ledger */}
+        <div className="card-cream p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-violet-pulse" />
-              <h3 className="text-sm font-bold text-ink-black">
+              <h2 className="text-sm font-extrabold text-ink-black">
                 {currentTargetMeta.title}
-              </h3>
+              </h2>
             </div>
             <p className="text-xs text-stone-gray mt-0.5">
               {currentTargetMeta.description}
             </p>
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
               <span className="text-[10px] font-bold text-stone-gray uppercase">Kolom Wajib:</span>
               {currentTargetMeta.columns.map((col) => (
                 <span
                   key={col}
-                  className="font-mono text-[10px] bg-warm-cream border border-sand-border px-1.5 py-0.5 rounded-md text-ink-black"
+                  className="metric-mono text-[10px] font-bold bg-paper-white border border-sand-border px-2 py-0.5 rounded-md text-ink-black"
                 >
                   {col}
                 </span>
@@ -292,17 +281,18 @@ export default function ImportPage() {
           </div>
 
           <button
+            type="button"
             onClick={handleDownloadTemplate}
-            className="text-xs font-semibold text-violet-pulse hover:underline flex items-center gap-1 shrink-0 self-start md:self-auto"
+            className="text-xs font-bold text-violet-pulse hover:underline inline-flex items-center gap-1.5 shrink-0 self-start md:self-auto"
           >
             <span>Contoh: {currentTargetMeta.sampleFileName}</span>
             <Download className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Upload Dropzone */}
+        {/* Step 3: Upload Dropzone */}
         {!parsedRows && (
-          <div className="bg-paper-white border-2 border-dashed border-sand-border rounded-2xl p-8 text-center hover:border-ink-black transition-colors">
+          <div className="card-clay border-2 border-dashed border-sand-border p-8 sm:p-10 text-center hover:border-ink-black transition-colors">
             <input
               type="file"
               ref={fileInputRef}
@@ -315,7 +305,7 @@ export default function ImportPage() {
               htmlFor="file-import-input"
               className="cursor-pointer flex flex-col items-center justify-center space-y-3"
             >
-              <div className="w-14 h-14 rounded-2xl bg-warm-cream border border-sand-border flex items-center justify-center text-ink-black shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-warm-cream border border-sand-border flex items-center justify-center text-ink-black">
                 {isProcessing ? (
                   <RefreshCw className="w-6 h-6 animate-spin text-violet-pulse" />
                 ) : (
@@ -330,7 +320,7 @@ export default function ImportPage() {
                   Mendukung format .CSV atau .XLSX (Maks. 5MB)
                 </p>
               </div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-warm-cream border border-sand-border text-xs font-semibold text-ink-black">
+              <div className="btn-pill-ghost text-xs">
                 <FileSpreadsheet className="w-3.5 h-3.5 text-stone-gray" />
                 <span>Pilih File Spreadsheet</span>
               </div>
@@ -340,15 +330,16 @@ export default function ImportPage() {
 
         {/* Success Alert if executed */}
         {importSuccessMessage && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-forest-surface border border-forest-emerald/30 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-forest-emerald shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="text-sm font-bold text-emerald-900">Import Berhasil</h4>
-              <p className="text-xs text-emerald-800 mt-0.5">{importSuccessMessage}</p>
+              <h4 className="text-sm font-extrabold text-ink-black">Import Berhasil</h4>
+              <p className="text-xs text-stone-gray mt-0.5">{importSuccessMessage}</p>
             </div>
             <button
+              type="button"
               onClick={handleReset}
-              className="px-3 py-1 text-xs font-bold bg-emerald-800 text-paper-white rounded-full hover:bg-emerald-900"
+              className="btn-pill-primary text-xs"
             >
               Import File Baru
             </button>
@@ -358,13 +349,12 @@ export default function ImportPage() {
         {/* Validation Preview Section */}
         {parsedRows && !importSuccessMessage && (
           <div className="space-y-4">
-            {/* Summary Statistics Card */}
-            <div className="bg-paper-white border border-sand-border rounded-2xl p-5 shadow-xs">
+            <div className="card-clay p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <FileSpreadsheet className="w-4 h-4 text-ink-black" />
-                    <span className="text-xs font-bold text-stone-gray uppercase tracking-wider">
+                    <span className="text-xs font-bold text-stone-gray uppercase tracking-wider metric-mono">
                       File: {fileName}
                     </span>
                   </div>
@@ -373,83 +363,81 @@ export default function ImportPage() {
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleReset}
-                    className="px-3.5 py-1.5 text-xs font-semibold text-stone-gray hover:text-ink-black bg-warm-cream border border-sand-border rounded-full"
-                  >
-                    Ganti File
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="btn-pill-ghost text-xs self-start sm:self-auto"
+                >
+                  Ganti File
+                </button>
               </div>
 
-              {/* Stats Counters */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-warm-cream border border-sand-border">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-xl bg-warm-cream border border-sand-border">
                   <span className="text-[11px] font-bold text-stone-gray uppercase block">Total Baris</span>
-                  <span className="text-xl font-extrabold text-ink-black font-mono">{totalCount}</span>
+                  <span className="text-xl font-black text-ink-black metric-mono">{totalCount}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-                  <span className="text-[11px] font-bold text-emerald-800 uppercase block">Baris Valid</span>
-                  <span className="text-xl font-extrabold text-emerald-700 font-mono">{validCount}</span>
+                <div className="p-3.5 rounded-xl bg-forest-surface border border-forest-emerald/30">
+                  <span className="text-[11px] font-bold text-forest-emerald uppercase block">Baris Valid</span>
+                  <span className="text-xl font-black text-forest-emerald metric-mono">{validCount}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
-                  <span className="text-[11px] font-bold text-rose-800 uppercase block">Baris Error</span>
-                  <span className="text-xl font-extrabold text-rose-700 font-mono">{invalidCount}</span>
+                <div className="p-3.5 rounded-xl bg-ember-surface border border-ember-orange/30">
+                  <span className="text-[11px] font-bold text-ember-orange uppercase block">Baris Error</span>
+                  <span className="text-xl font-black text-ember-orange metric-mono">{invalidCount}</span>
                 </div>
               </div>
 
-              {/* Missing column alert if any */}
               {missingColumns.length > 0 && (
-                <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="text-xs text-amber-900">
+                <div className="mt-4 p-3.5 rounded-xl bg-ember-surface border border-ember-orange/30 flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-ember-orange shrink-0 mt-0.5" />
+                  <div className="text-xs text-ink-black">
                     <span className="font-bold">Kolom wajib belum ditemukan: </span>
-                    <span className="font-mono">{missingColumns.join(', ')}</span>. Harap sesuaikan nama header tabel Anda dengan template.
+                    <span className="metric-mono font-bold text-ember-orange">{missingColumns.join(', ')}</span>. Harap sesuaikan nama header tabel Anda dengan template.
                   </div>
                 </div>
               )}
 
-              {/* Strict Rejection Notice if invalid rows exist */}
               {invalidCount > 0 && (
-                <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-300 flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="text-xs text-rose-950 flex-1">
-                    <span className="font-extrabold">Aturan Operasional (Strict Rejection): </span>
-                    Ditemukan <span className="font-bold font-mono">{invalidCount}</span> baris data tidak valid. Baris yang bermasalah akan ditolak secara otomatis untuk menjaga integritas database. Anda dapat mengimpor hanya baris yang valid atau memperbaiki file spreadsheet.
+                <div className="mt-4 p-3.5 rounded-xl bg-ember-surface border border-ember-orange/30 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-ember-orange shrink-0 mt-0.5" />
+                  <div className="text-xs text-ink-black flex-1">
+                    <span className="font-extrabold text-ember-orange">Aturan Operasional (Strict Rejection): </span>
+                    Ditemukan <span className="font-bold metric-mono">{invalidCount}</span> baris data tidak valid. Baris yang bermasalah akan ditolak secara otomatis untuk menjaga integritas database. Anda dapat mengimpor hanya baris yang valid atau memperbaiki file spreadsheet.
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Filter Tabs & Action Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-1.5 p-1 bg-warm-cream border border-sand-border rounded-full self-start">
                 <button
+                  type="button"
                   onClick={() => setActiveTab('all')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${
+                  className={`px-3 min-h-9 text-xs font-bold rounded-full transition-colors ${
                     activeTab === 'all'
-                      ? 'bg-ink-black text-paper-white shadow-xs'
+                      ? 'bg-ink-black text-paper-white'
                       : 'text-stone-gray hover:text-ink-black'
                   }`}
                 >
                   Semua ({totalCount})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('valid')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${
+                  className={`px-3 min-h-9 text-xs font-bold rounded-full transition-colors ${
                     activeTab === 'valid'
-                      ? 'bg-emerald-700 text-paper-white shadow-xs'
+                      ? 'bg-forest-emerald text-paper-white'
                       : 'text-stone-gray hover:text-ink-black'
                   }`}
                 >
                   Hanya Valid ({validCount})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('invalid')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-all ${
+                  className={`px-3 min-h-9 text-xs font-bold rounded-full transition-colors ${
                     activeTab === 'invalid'
-                      ? 'bg-rose-700 text-paper-white shadow-xs'
+                      ? 'bg-ember-orange text-paper-white'
                       : 'text-stone-gray hover:text-ink-black'
                   }`}
                 >
@@ -457,45 +445,45 @@ export default function ImportPage() {
                 </button>
               </div>
 
-              {/* Execution Buttons */}
               <div className="flex items-center gap-2">
                 {invalidCount > 0 && validCount > 0 && (
                   <button
+                    type="button"
                     onClick={() => handleExecuteImport(true)}
-                    className="px-4 py-2 text-xs font-bold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-full transition-colors flex items-center gap-1.5 shadow-xs"
+                    className="btn-pill-primary text-xs"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-forest-emerald" />
                     <span>Import {validCount} Baris Valid Saja</span>
                   </button>
                 )}
 
                 {invalidCount === 0 && validCount > 0 && (
                   <button
+                    type="button"
                     onClick={() => handleExecuteImport(false)}
-                    className="px-5 py-2 text-xs font-extrabold text-paper-white bg-ink-black hover:bg-stone-800 rounded-full transition-colors flex items-center gap-1.5 shadow-xs"
+                    className="btn-pill-primary text-xs"
                   >
                     <span>Eksekusi Import ({validCount} Baris)</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-violet-pulse" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Preview Table */}
-            <div className="bg-paper-white border border-sand-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="card-clay overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-sand-border text-stone-gray uppercase tracking-wider bg-warm-cream/50">
-                      <th className="py-2.5 px-3 font-semibold text-center w-12">#</th>
-                      <th className="py-2.5 px-3 font-semibold text-center w-24">Status</th>
+                    <tr className="border-b border-sand-border text-stone-gray uppercase tracking-wider bg-warm-cream">
+                      <th className="py-2.5 px-3 font-bold text-center w-12">#</th>
+                      <th className="py-2.5 px-3 font-bold text-center w-24">Status</th>
                       {currentTargetMeta.columns.map((col) => (
-                        <th key={col} className="py-2.5 px-3 font-semibold whitespace-nowrap">
+                        <th key={col} className="py-2.5 px-3 font-bold whitespace-nowrap">
                           {col}
                         </th>
                       ))}
                       {invalidCount > 0 && (
-                        <th className="py-2.5 px-3 font-semibold text-rose-700">Detail Masalah</th>
+                        <th className="py-2.5 px-3 font-bold text-ember-orange">Detail Masalah</th>
                       )}
                     </tr>
                   </thead>
@@ -504,56 +492,54 @@ export default function ImportPage() {
                       <tr
                         key={row.index}
                         className={`transition-colors ${
-                          row.isValid ? 'hover:bg-warm-cream/30' : 'bg-rose-50/40 hover:bg-rose-50/70'
+                          row.isValid ? 'hover:bg-warm-cream/40' : 'bg-ember-surface/50'
                         }`}
                       >
-                        <td className="py-2.5 px-3 text-center font-mono text-stone-gray font-medium">
+                        <td className="py-2.5 px-3 text-center metric-mono text-stone-gray font-bold">
                           {row.index}
                         </td>
                         <td className="py-2.5 px-3 text-center whitespace-nowrap">
                           {row.isValid ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-forest-emerald bg-forest-surface px-2 py-0.5 rounded-full border border-forest-emerald/30">
+                              <CheckCircle2 className="w-3 h-3" />
                               Valid
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
-                              <XCircle className="w-3 h-3 text-rose-600" />
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-ember-orange bg-ember-surface px-2 py-0.5 rounded-full border border-ember-orange/30">
+                              <XCircle className="w-3 h-3" />
                               Error
                             </span>
                           )}
                         </td>
 
-                        {/* Column Values */}
                         {currentTargetMeta.columns.map((col) => {
                           const val = row.data[col];
                           const hasColError = row.errors.some((e) => e.field === col);
                           return (
                             <td
                               key={col}
-                              className={`py-2.5 px-3 font-mono ${
-                                hasColError ? 'text-rose-700 font-bold bg-rose-100/50' : 'text-ink-black'
+                              className={`py-2.5 px-3 metric-mono ${
+                                hasColError ? 'text-ember-orange font-bold bg-ember-surface' : 'text-ink-black'
                               }`}
                             >
-                              {val !== undefined && val !== null ? String(val) : '—'}
+                              {val !== undefined && val !== null ? String(val) : '-'}
                             </td>
                           );
                         })}
 
-                        {/* Error Details */}
                         {invalidCount > 0 && (
-                          <td className="py-2.5 px-3 text-rose-800 text-[11px]">
+                          <td className="py-2.5 px-3 text-ember-orange text-[11px]">
                             {row.errors.length > 0 ? (
                               <ul className="list-disc list-inside space-y-0.5">
                                 {row.errors.map((err, errIdx) => (
                                   <li key={errIdx}>
-                                    <span className="font-semibold font-mono">{err.field}:</span>{' '}
+                                    <span className="font-bold metric-mono">{err.field}:</span>{' '}
                                     {err.message}
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <span className="text-stone-400">—</span>
+                              <span className="text-stone-gray">-</span>
                             )}
                           </td>
                         )}
@@ -569,3 +555,4 @@ export default function ImportPage() {
     </AppShell>
   );
 }
+

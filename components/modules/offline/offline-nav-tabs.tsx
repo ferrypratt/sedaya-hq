@@ -16,7 +16,7 @@ export function OfflineNavTabs() {
     },
     {
       href: '/offline/sales-support',
-      label: 'Sales Support',
+      label: 'Dukungan Sales',
       icon: HelpCircle,
       description: 'Materi CRO & Sales',
     },
@@ -30,12 +30,15 @@ export function OfflineNavTabs() {
       href: '/offline/props',
       label: 'Alat Peraga & Reklame',
       icon: Megaphone,
-      description: 'Baliho, spanduk, umbul-umbul',
+      description: 'Baliho, spanduk & papan',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-1.5 bg-warm-cream border border-sand-border rounded-2xl mb-6">
+    <nav
+      aria-label="Sub-modul Marketing Lapangan"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 p-1.5 bg-warm-cream border border-sand-border rounded-2xl mb-6"
+    >
       {tabs.map((tab) => {
         const isActive = pathname.startsWith(tab.href);
         const Icon = tab.icon;
@@ -43,26 +46,33 @@ export function OfflineNavTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`p-3 rounded-xl transition-all text-left flex items-start gap-2.5 ${
+            aria-current={isActive ? 'page' : undefined}
+            className={`px-3.5 py-2.5 min-h-12 rounded-xl transition-colors text-left flex items-center gap-3 border ${
               isActive
-                ? 'bg-paper-white border border-sand-border text-ink-black shadow-xs ring-1 ring-ink-black/10'
-                : 'text-stone-gray hover:text-ink-black hover:bg-paper-white/50'
+                ? 'bg-paper-white border-ink-black text-ink-black'
+                : 'bg-transparent border-transparent text-stone-gray hover:text-ink-black hover:bg-paper-white/60 hover:border-sand-border'
             }`}
           >
             <div
-              className={`p-1.5 rounded-lg shrink-0 ${
-                isActive ? 'bg-ink-black text-paper-white' : 'bg-stone-100 text-stone-600'
+              className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                isActive
+                  ? 'bg-ink-black text-paper-white border-ink-black'
+                  : 'bg-paper-white text-stone-gray border-sand-border'
               }`}
             >
               <Icon className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold block truncate">{tab.label}</span>
-              <span className="text-[10px] text-stone-gray block truncate">{tab.description}</span>
+              <span className="text-xs font-bold block truncate text-ink-black">
+                {tab.label}
+              </span>
+              <span className="text-[11px] text-stone-gray block truncate">
+                {tab.description}
+              </span>
             </div>
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }
