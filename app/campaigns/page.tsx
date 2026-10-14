@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Flame,
   Check,
+  Trash2,
 } from 'lucide-react';
 
 export default function CampaignsPage() {
@@ -37,6 +38,27 @@ export default function CampaignsPage() {
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'completed'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Auto-purge old dummy seed campaigns if they exist in client storage
+  useEffect(() => {
+    if (campaigns.some((c) => c.id.startsWith('c1010101-'))) {
+      setCampaigns((prev) => prev.filter((c) => !c.id.startsWith('c1010101-')));
+    }
+  }, [campaigns, setCampaigns]);
+
+  const handleDeleteCampaign = (id: string) => {
+    if (typeof window !== 'undefined' && !window.confirm('Hapus kampanye promosi ini?')) {
+      return;
+    }
+    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const handleClearAll = () => {
+    if (typeof window !== 'undefined' && !window.confirm('Kosongkan semua data kampanye promosi?')) {
+      return;
+    }
+    setCampaigns([]);
+  };
 
   // New Campaign Form State
   const [formData, setFormData] = useState({
@@ -159,6 +181,17 @@ export default function CampaignsPage() {
           description="Perencanaan promosi tematik bulanan, alokasi anggaran, checklist materi kreatif, dan tracking target booking unit perumahan Sedaya Property."
           actions={
             <div className="flex items-center gap-2">
+              {campaigns.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="btn-pill-ghost text-xs py-2 px-3 text-stone-gray hover:text-ember-orange flex items-center gap-1.5"
+                  title="Kosongkan seluruh data kampanye"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Kosongkan Data</span>
+                </button>
+              )}
               <Link
                 href="/content/studio"
                 className="btn-pill-secondary flex items-center gap-1.5 text-xs py-2 px-3.5"
@@ -277,6 +310,30 @@ export default function CampaignsPage() {
 
         {/* Campaign Cards List */}
         <div className="space-y-5">
+          {filteredCampaigns.length === 0 && (
+            <div className="card-clay p-12 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-warm-cream border border-sand-border flex items-center justify-center mx-auto text-forest shadow-xs">
+                <Megaphone className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="text-base font-bold text-ink-black">
+                  Belum Ada Data Kampanye Promo
+                </h3>
+                <p className="text-xs text-stone-gray leading-relaxed font-sans">
+                  Seluruh data kampanye telah dikosongkan. Anda dapat mulai menambahkan rencana kampanye promo, alokasi anggaran, dan checklist materi promosi secara mandiri.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="btn-pill-primary text-xs py-2 px-4 bg-forest text-paper-white hover:bg-forest-emerald inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Buat Kampanye Pertama</span>
+              </button>
+            </div>
+          )}
+
           {filteredCampaigns.map((camp) => {
             const project = INITIAL_PROJECTS.find((p) => p.id === camp.project_id);
             const readyCount = camp.creative_assets.filter((a) => a.status === 'ready').length;
@@ -323,6 +380,15 @@ export default function CampaignsPage() {
                     <span className="metric-mono text-xs font-semibold text-ink-black block mt-0.5">
                       {camp.period_start} s/d {camp.period_end}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCampaign(camp.id)}
+                      className="text-stone-gray hover:text-ember-orange text-xs flex items-center gap-1 sm:justify-end mt-1.5 transition-colors"
+                      title="Hapus Kampanye"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
+                    </button>
                   </div>
                 </div>
 
