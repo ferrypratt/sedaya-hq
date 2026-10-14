@@ -46,6 +46,7 @@ export async function updateSession(request: NextRequest) {
   const isDemoMode = request.cookies.get('sedaya_demo')?.value === '1';
   const isPublicRoute =
     request.nextUrl.pathname.startsWith('/activities/public') ||
+    request.nextUrl.pathname.startsWith('/public') ||
     request.nextUrl.pathname.startsWith('/share') ||
     request.nextUrl.pathname.startsWith('/api');
 

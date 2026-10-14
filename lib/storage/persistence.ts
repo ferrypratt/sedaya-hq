@@ -60,6 +60,44 @@ function subscribe(callback: () => void) {
   };
 }
 
+export type SyncStatus = 'synced' | 'syncing' | 'offline' | 'local';
+
+let globalSyncStatus: SyncStatus = 'synced';
+let lastSyncTimestamp: number = Date.now();
+
+export function notifySyncStatus(status: SyncStatus) {
+  globalSyncStatus = status;
+  if (status === 'synced') {
+    lastSyncTimestamp = Date.now();
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('sedaya_sync_status_change', {
+        detail: { status, timestamp: lastSyncTimestamp },
+      })
+    );
+  }
+}
+
+export function useSyncStatus(): { status: SyncStatus; lastSynced: number } {
+  const subscribeSync = (callback: () => void) => {
+    if (typeof window === 'undefined') return () => {};
+    window.addEventListener('sedaya_sync_status_change', callback);
+    return () => window.removeEventListener('sedaya_sync_status_change', callback);
+  };
+
+  const getSnapshot = () => `${globalSyncStatus}:${lastSyncTimestamp}`;
+  const getServerSnapshot = () => 'synced:0';
+
+  const raw = useSyncExternalStore(subscribeSync, getSnapshot, getServerSnapshot);
+  const [status, timeStr] = raw.split(':');
+
+  return {
+    status: (status || 'synced') as SyncStatus,
+    lastSynced: Number(timeStr) || lastSyncTimestamp,
+  };
+}
+
 /**
  * React hook for real-time persistent state backed by localStorage
  * and synchronized with Vercel Cloud Server & Supabase Database.
@@ -108,6 +146,7 @@ export function usePersistentState<T>(
           if (hasContent) {
             setLocalStorage(key, cloudData);
           }
+          notifySyncStatus('synced');
         }
       } catch {
         // Silently continue with local storage
@@ -133,6 +172,7 @@ export function usePersistentState<T>(
       setLocalStorage(key, nextValue);
 
       // 2. Asynchronous push to cloud server & Supabase database
+      notifySyncStatus('syncing');
       try {
         fetch('/api/sync', {
           method: 'POST',
@@ -142,9 +182,19 @@ export function usePersistentState<T>(
             items: Array.isArray(nextValue) ? nextValue : undefined,
             item: !Array.isArray(nextValue) ? nextValue : undefined,
           }),
-        }).catch(() => {});
+        })
+          .then((res) => {
+            if (res.ok) {
+              notifySyncStatus('synced');
+            } else {
+              notifySyncStatus('local');
+            }
+          })
+          .catch(() => {
+            notifySyncStatus('offline');
+          });
       } catch {
-        // Ignore network errors
+        notifySyncStatus('offline');
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

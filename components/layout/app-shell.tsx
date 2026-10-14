@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { MobileNav } from './mobile-nav';
-import { Plus, Building2, UploadCloud } from 'lucide-react';
+import { Plus, Building2, UploadCloud, Search } from 'lucide-react';
+import { SyncStatusIndicator } from '@/components/ui/sync-status-indicator';
+import { CommandPalette, openCommandPalette } from '@/components/ui/command-palette';
 
 const emptySubscribe = () => () => {};
 
@@ -73,6 +75,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={openCommandPalette}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold text-stone-gray bg-warm-cream border border-sand-border hover:border-sand-hover hover:text-ink-black transition-colors"
+              title="Buka pencarian cepat dan aksi (Cmd + K)"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Cari...</span>
+              <kbd className="text-[10px] bg-paper-white border border-sand-border px-1.5 py-0.5 rounded font-mono">
+                ⌘K
+              </kbd>
+            </button>
+            <SyncStatusIndicator />
             <span className="metric-mono text-xs text-stone-gray px-2.5 py-1 rounded-md bg-warm-cream border border-sand-border">
               {todayFormatted}
             </span>
@@ -106,6 +121,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+
+      <CommandPalette />
     </div>
   );
 }

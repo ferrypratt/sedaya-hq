@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { SedayaLogo } from '@/components/shared/sedaya-logo';
+import { SyncStatusIndicator } from '@/components/ui/sync-status-indicator';
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -96,15 +97,18 @@ export function MobileNav() {
             </span>
           </div>
         </Link>
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
-          className="min-w-11 min-h-11 inline-flex items-center justify-center rounded-xl border border-sand-border text-ink-black bg-warm-cream hover:border-sand-hover transition-colors"
-        >
-          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <SyncStatusIndicator compact />
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-label={isOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
+            className="min-w-11 min-h-11 inline-flex items-center justify-center rounded-xl border border-sand-border text-ink-black bg-warm-cream hover:border-sand-hover transition-colors"
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       {/* Slide-out Full Menu Drawer */}

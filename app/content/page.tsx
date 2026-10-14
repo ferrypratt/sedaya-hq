@@ -21,6 +21,8 @@ import {
   Columns3,
   ExternalLink,
   Building2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 const PILLAR_LABELS: Record<ContentPillar, string> = {
@@ -64,6 +66,15 @@ export default function ContentCalendarPage() {
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyCaption = (id: string, captionText: string) => {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(captionText);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -379,6 +390,32 @@ export default function ContentCalendarPage() {
                               <Building2 className="w-3 h-3 text-ash-gray" />
                               <span className="truncate">{item.project.name}</span>
                             </span>
+                          )}
+
+                          {item.caption && (
+                            <div className="pt-1.5 flex items-center justify-between text-[11px] text-stone-gray">
+                              <span className="truncate italic line-clamp-1 max-w-[180px]">
+                                &quot;{item.caption}&quot;
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyCaption(item.id, item.caption || '')}
+                                className="inline-flex items-center gap-1 text-[10px] font-bold text-ink-black hover:text-forest transition-colors shrink-0 ml-1.5"
+                                title="Salin caption konten ini"
+                              >
+                                {copiedId === item.id ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-forest" />
+                                    <span className="text-forest">Disalin</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3 text-stone-gray" />
+                                    <span>Salin Caption</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           )}
 
                           <div className="pt-2 border-t border-sand-border flex items-center justify-between gap-2 text-[11px] text-stone-gray">

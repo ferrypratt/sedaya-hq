@@ -136,7 +136,7 @@ export default function ActivitiesPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Laporan_Aktivitas_Sedaya_${selectedDate}_${picFilter}.pdf`;
+      a.download = `Laporan_Aktivitas_Branding_Marketing_${selectedDate}_${picFilter}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -171,11 +171,77 @@ export default function ActivitiesPage() {
     }, 3500);
   };
 
+  const handleShareWhatsApp = () => {
+    if (typeof window === 'undefined') return;
+
+    const picLabel =
+      picFilter === 'ferry'
+        ? 'Ferry Pratama'
+        : picFilter === 'ziyad'
+        ? 'Ziyad'
+        : 'Semua PIC';
+
+    const dateLabel =
+      viewMode === 'day' ? selectedDate : 'Seluruh Rekap Aktivitas';
+
+    const totalCount = filteredActivities.length;
+    const doneCount = filteredActivities.filter((a) => a.status === 'done').length;
+    const inProgressCount = filteredActivities.filter((a) => a.status === 'in_progress').length;
+    const blockedCount = filteredActivities.filter((a) => a.status === 'blocked').length;
+
+    const doneItems = filteredActivities
+      .filter((a) => a.status === 'done')
+      .map((a, i) => `${i + 1}. [${a.project?.name || 'Umum'}] ${a.title}`)
+      .join('\n');
+
+    const pendingItems = filteredActivities
+      .filter((a) => a.status !== 'done')
+      .map((a, i) => {
+        const stText =
+          a.status === 'in_progress'
+            ? 'Sedang Berjalan'
+            : a.status === 'blocked'
+            ? 'Terkendala'
+            : 'Direncanakan';
+        return `${i + 1}. [${a.project?.name || 'Umum'}] ${a.title} (${stText})`;
+      })
+      .join('\n');
+
+    const publicUrl = `${window.location.origin}/activities/public`;
+
+    const messageLines = [
+      `*LOG AKTIVITAS HARIAN BRANDING & MARKETING*`,
+      `Tanggal: ${dateLabel}`,
+      `PIC: ${picLabel}`,
+      ``,
+      `*Ringkasan Progres:*`,
+      `- Total Aktivitas: ${totalCount} Item`,
+      `- Selesai: ${doneCount} Item`,
+      `- Sedang Berjalan: ${inProgressCount} Item`,
+      blockedCount > 0 ? `- Kendala: ${blockedCount} Item` : null,
+      ``,
+      `*Pekerjaan Selesai:*`,
+      doneItems || '- Tidak ada aktivitas selesai',
+      pendingItems ? `\n*Pekerjaan Berjalan / Tertunda:*\n${pendingItems}` : null,
+      ``,
+      `*Detail & Tautan Output:*`,
+      publicUrl,
+    ].filter((l) => l !== null).join('\n');
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(messageLines);
+    }
+
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(messageLines)}`;
+    window.open(waUrl, '_blank');
+    showToast('Ringkasan disalin & membuka WhatsApp grup Daily Report!');
+  };
+
   const handleCopyPublicLink = () => {
     if (typeof window !== 'undefined') {
       const publicUrl = `${window.location.origin}/activities/public`;
       navigator.clipboard.writeText(publicUrl);
-      showToast('Tautan publik berhasil disalin ke clipboard! Siap dikirim ke WhatsApp Direksi.');
+      showToast('Tautan publik berhasil disalin ke clipboard! Siap dikirim ke WhatsApp grup Daily Report.');
     }
   };
 
@@ -361,12 +427,22 @@ export default function ActivitiesPage() {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
+                onClick={handleShareWhatsApp}
+                className="btn-pill-ghost text-xs py-2 px-3 text-forest border-forest-border/40 hover:bg-forest-surface transition-colors"
+                title="Kirim ringkasan laporan harian langsung ke WhatsApp grup Daily Report"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Kirim ke WA Daily Report</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleCopyPublicLink}
                 className="btn-pill-ghost text-xs py-2 px-3"
-                title="Salin tautan publik khusus peninjauan Direksi & Manajemen"
+                title="Salin tautan publik khusus peninjauan tim & manajemen"
               >
-                <Share2 className="w-3.5 h-3.5 text-stone-gray" />
-                <span>Bagikan ke Direksi</span>
+                <ExternalLink className="w-3.5 h-3.5 text-stone-gray" />
+                <span>Link Publik</span>
               </button>
 
               <button
@@ -622,14 +698,12 @@ export default function ActivitiesPage() {
                     )}
                   </div>
 
-                  {(act.notes || act.output_url) && (
+                  {act.notes && (
                     <div className="p-3 rounded-xl bg-warm-cream border border-sand-border text-xs space-y-1.5">
-                      {act.notes && (
-                        <p className="text-slate-gray">
-                          <strong className="font-semibold text-ink-black">Catatan:</strong>{' '}
-                          {act.notes}
-                        </p>
-                      )}
+                      <p className="text-slate-gray">
+                        <strong className="font-semibold text-ink-black">Catatan:</strong>{' '}
+                        {act.notes}
+                      </p>
                       {act.output_url && (
                         <a
                           href={act.output_url}
@@ -641,6 +715,20 @@ export default function ActivitiesPage() {
                           <span>Buka Tautan Output</span>
                         </a>
                       )}
+                    </div>
+                  )}
+
+                  {!act.notes && act.output_url && (
+                    <div className="pt-0.5">
+                      <a
+                        href={act.output_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warm-cream border border-sand-border text-xs font-semibold text-ink-black hover:border-ink-black transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-stone-gray" />
+                        <span>Buka Tautan Output</span>
+                      </a>
                     </div>
                   )}
 
@@ -658,14 +746,16 @@ export default function ActivitiesPage() {
 
                   <div className="pt-3 border-t border-sand-border flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleCarryOver(act)}
-                        className="btn-pill-ghost text-xs py-1.5 px-3 min-h-9"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Carry Over ke Besok</span>
-                      </button>
+                      {act.status !== 'done' && (
+                        <button
+                          type="button"
+                          onClick={() => handleCarryOver(act)}
+                          className="btn-pill-ghost text-xs py-1.5 px-3 min-h-9"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Carry Over ke Besok</span>
+                        </button>
+                      )}
 
                       {act.status !== 'done' && (
                         <button

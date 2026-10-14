@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
@@ -23,6 +23,7 @@ import {
   ContentItem,
 } from '@/lib/types/database';
 import { InstagramIcon, TikTokIcon } from '@/components/shared/icons';
+import { QuickUnitSaleModal } from '@/components/modules/projects/quick-unit-sale-modal';
 import {
   Building2,
   CalendarCheck,
@@ -35,9 +36,20 @@ import {
   MapPin,
   FileText,
   Plus,
+  Tag,
 } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
   const [allHousingSnapshots] = usePersistentState<Record<string, UnitSnapshot[]>>(
     STORAGE_KEYS.HOUSING_SNAPSHOTS,
     INITIAL_UNIT_SNAPSHOTS
@@ -173,6 +185,16 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="space-y-8">
+        {toastMessage && (
+          <aside
+            role="status"
+            aria-live="polite"
+            className="p-3.5 rounded-2xl bg-forest-surface border border-forest-border text-xs font-semibold text-ink-black flex items-center gap-2.5 shadow-xs"
+          >
+            <CheckCircle2 className="w-4 h-4 text-forest shrink-0" />
+            <span>{toastMessage}</span>
+          </aside>
+        )}
         <PageHeader
           section="Komando Eksekutif"
           meta={<span>Medan & Deli Serdang</span>}
@@ -180,6 +202,15 @@ export default function DashboardPage() {
           description="Pantauan rekonsiliasi stok unit perumahan, performa kanal digital, dan progres kerja harian tim pemasaran PT Sedaya Property."
           actions={
             <>
+              <button
+                type="button"
+                onClick={() => setIsUnitModalOpen(true)}
+                className="btn-pill-ghost text-xs py-2 px-3 text-forest border-forest-border/40 hover:bg-forest-surface transition-colors"
+                title="Catat perubahan status unit (booking, SP3K, akad, cash) secara cepat"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span>+ Catat Penjualan Unit</span>
+              </button>
               <Link href="/reports" className="btn-pill-ghost">
                 <FileText className="w-3.5 h-3.5 text-stone-gray" />
                 <span>Cetak Laporan</span>
@@ -729,6 +760,12 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+
+        <QuickUnitSaleModal
+          isOpen={isUnitModalOpen}
+          onClose={() => setIsUnitModalOpen(false)}
+          onSuccess={showToast}
+        />
       </div>
     </AppShell>
   );

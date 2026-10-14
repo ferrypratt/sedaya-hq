@@ -156,7 +156,7 @@ export default function PublicActivitiesPage() {
           activities={filteredActivities}
           dateTitle={dateLabel}
           picName={picLabel}
-          generatedBy="Sedaya HQ Executive Report"
+          generatedBy="Laporan Harian Branding & Marketing"
         />
       );
 
@@ -164,7 +164,7 @@ export default function PublicActivitiesPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Laporan_Eksekutif_Aktivitas_Sedaya_${selectedDate}_${picFilter}.pdf`;
+      a.download = `Laporan_Aktivitas_Branding_Marketing_${selectedDate}_${picFilter}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -528,25 +528,37 @@ export default function PublicActivitiesPage() {
                       )}
                     </div>
 
-                    {(act.notes || act.output_url) && (
+                    {act.notes && (
                       <div className="p-3 rounded-xl bg-warm-cream border border-sand-border text-xs space-y-1.5">
-                        {act.notes && (
-                          <p className="text-slate-gray">
-                            <strong className="font-semibold text-ink-black">Catatan:</strong>{' '}
-                            {act.notes}
-                          </p>
-                        )}
+                        <p className="text-slate-gray">
+                          <strong className="font-semibold text-ink-black">Catatan:</strong>{' '}
+                          {act.notes}
+                        </p>
                         {act.output_url && (
                           <a
                             href={act.output_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-violet-pulse font-semibold hover:underline"
+                            className="inline-flex items-center gap-1.5 text-violet-pulse font-semibold hover:underline"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                             <span>Buka Bukti Hasil Kerja (Tautan Output)</span>
                           </a>
                         )}
+                      </div>
+                    )}
+
+                    {!act.notes && act.output_url && (
+                      <div className="pt-0.5">
+                        <a
+                          href={act.output_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warm-cream border border-sand-border text-xs font-semibold text-ink-black hover:border-ink-black transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-stone-gray" />
+                          <span>Buka Bukti Hasil Kerja (Tautan Output)</span>
+                        </a>
                       </div>
                     )}
 

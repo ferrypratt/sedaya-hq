@@ -11,6 +11,7 @@ import {
 } from '@/lib/data/seed-data';
 import { Project, UnitSnapshot, KosSnapshot } from '@/lib/types/database';
 import { usePersistentState, STORAGE_KEYS } from '@/lib/storage/persistence';
+import { QuickUnitSaleModal } from '@/components/modules/projects/quick-unit-sale-modal';
 import {
   AlertTriangle,
   ArrowRight,
@@ -18,12 +19,29 @@ import {
   LayoutGrid,
   MapPin,
   Table2,
+  Plus,
+  Tag,
 } from 'lucide-react';
 import { InstagramIcon } from '@/components/shared/icons';
 
 export default function ProjectsPage() {
   const [filter, setFilter] = useState<'all' | 'active_project' | 'business_unit' | 'upcoming'>('all');
   const [displayMode, setDisplayMode] = useState<'cards' | 'table'>('cards');
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+  const [selectedModalProject, setSelectedModalProject] = useState<string | undefined>(undefined);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  const handleOpenSaleModal = (projectId?: string) => {
+    setSelectedModalProject(projectId);
+    setIsUnitModalOpen(true);
+  };
 
   const [allHousingSnapshots] = usePersistentState<Record<string, UnitSnapshot[]>>(
     STORAGE_KEYS.HOUSING_SNAPSHOTS,
@@ -105,37 +123,59 @@ export default function ProjectsPage() {
   return (
     <AppShell>
       <div className="space-y-7">
+        {toastMessage && (
+          <aside
+            role="status"
+            aria-live="polite"
+            className="p-3.5 rounded-2xl bg-forest-surface border border-forest-border text-xs font-semibold text-ink-black flex items-center gap-2.5 shadow-xs"
+          >
+            <CheckCircle2 className="w-4 h-4 text-forest shrink-0" />
+            <span>{toastMessage}</span>
+          </aside>
+        )}
         <PageHeader
           section="Portofolio & Inventaris"
           meta={<span>{INITIAL_PROJECTS.length} Entitas Terdaftar</span>}
           title="Proyek & Rekonsiliasi Unit"
           description="Pantau posisi stok unit perumahan subsidi, progres KPR (Booking, SP3K, Akad), dan rekonsiliasi kapasitas master di Medan & Deli Serdang."
           actions={
-            <div className="inline-flex items-center p-1 rounded-full bg-warm-cream border border-sand-border">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => setDisplayMode('cards')}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
-                  displayMode === 'cards'
-                    ? 'bg-ink-black text-paper-white'
-                    : 'text-stone-gray hover:text-ink-black'
-                }`}
+                onClick={() => handleOpenSaleModal()}
+                className="btn-pill-primary text-xs py-2 px-3.5 inline-flex items-center gap-1.5"
+                title="Catat perubahan status unit (booking, SP3K, akad, cash) secara cepat"
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Kartu Portofolio</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Catat Penjualan Unit</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setDisplayMode('table')}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
-                  displayMode === 'table'
-                    ? 'bg-ink-black text-paper-white'
-                    : 'text-stone-gray hover:text-ink-black'
-                }`}
-              >
-                <Table2 className="w-3.5 h-3.5" />
-                <span>Tabel Rekonsiliasi</span>
-              </button>
+
+              <div className="inline-flex items-center p-1 rounded-full bg-warm-cream border border-sand-border">
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode('cards')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
+                    displayMode === 'cards'
+                      ? 'bg-ink-black text-paper-white'
+                      : 'text-stone-gray hover:text-ink-black'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Kartu Portofolio</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode('table')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
+                    displayMode === 'table'
+                      ? 'bg-ink-black text-paper-white'
+                      : 'text-stone-gray hover:text-ink-black'
+                  }`}
+                >
+                  <Table2 className="w-3.5 h-3.5" />
+                  <span>Tabel Rekonsiliasi</span>
+                </button>
+              </div>
             </div>
           }
         />
@@ -481,6 +521,13 @@ export default function ProjectsPage() {
             </div>
           </section>
         )}
+
+        <QuickUnitSaleModal
+          isOpen={isUnitModalOpen}
+          defaultProjectId={selectedModalProject}
+          onClose={() => setIsUnitModalOpen(false)}
+          onSuccess={showToast}
+        />
       </div>
     </AppShell>
   );

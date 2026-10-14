@@ -4,8 +4,10 @@ import {
   Text,
   View,
   StyleSheet,
+  Image,
 } from '@react-pdf/renderer';
 import { DailyActivity, ActivityCategory, ActivityStatus } from '@/lib/types/database';
+import { SEDAYA_LOGO_BASE64 } from './sedaya-logo-data';
 
 const CATEGORY_NAMES: Record<ActivityCategory, string> = {
   content_production: 'Produksi Konten',
@@ -51,6 +53,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+  },
+  brandLogo: {
+    width: 140,
+    height: 47,
+    marginBottom: 4,
   },
   brandTitle: {
     fontSize: 14,
@@ -308,15 +315,14 @@ export function ActivitiesPdfDocument({
         <View style={styles.header}>
           <View style={styles.brandRow}>
             <View>
-              <Text style={styles.brandTitle}>PT Sedaya Property</Text>
+              <Image src={SEDAYA_LOGO_BASE64} style={styles.brandLogo} />
               <Text style={styles.brandSubtitle}>
                 Divisi Branding, Marketing & Riset | Medan & Deli Serdang
               </Text>
             </View>
-            <Text style={styles.tagBadge}>Laporan Resmi Operasional</Text>
           </View>
           <Text style={styles.reportHeading}>
-            LOG HARIAN AKTIVITAS PEMASARAN TIM
+            LOG HARIAN AKTIVITAS BRANDING & MARKETING
           </Text>
         </View>
 
@@ -440,25 +446,6 @@ export function ActivitiesPdfDocument({
           )}
         </View>
 
-        {/* Formal Signatures */}
-        <View style={styles.signatureSection}>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureRole}>Petugas Pelaksana (PIC)</Text>
-            <Text style={styles.signatureName}>
-              {picName === 'Semua PIC' ? '( Seluruh Anggota Tim )' : picName}
-            </Text>
-            <Text style={styles.signatureOrg}>Tim Operasional Marketing</Text>
-          </View>
-          <View style={styles.signatureBox}>
-            <Text style={styles.signatureRole}>
-              Mengetahui / Mengesahkan
-            </Text>
-            <Text style={styles.signatureName}>Ferry Pratama</Text>
-            <Text style={styles.signatureOrg}>
-              Supervisor Marketing & Riset
-            </Text>
-          </View>
-        </View>
 
         {/* Footer */}
         <View style={styles.footer} fixed>
