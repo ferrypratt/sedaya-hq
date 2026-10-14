@@ -47,6 +47,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     request.nextUrl.pathname.startsWith('/activities/public') ||
     request.nextUrl.pathname.startsWith('/public') ||
+    request.nextUrl.pathname.startsWith('/katalog') ||
     request.nextUrl.pathname.startsWith('/share') ||
     request.nextUrl.pathname.startsWith('/api');
 

@@ -142,6 +142,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: data || [] });
     }
 
+    if (moduleName === 'sedaya_campaigns') {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .order('period_start', { ascending: false });
+
+      if (error) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      return NextResponse.json({ success: true, data: data || [] });
+    }
+
     return NextResponse.json({ success: false, error: 'Unknown module' }, { status: 400 });
   } catch (err) {
     return NextResponse.json(

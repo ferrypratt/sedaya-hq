@@ -18,6 +18,10 @@ import {
   FileText,
   Settings,
   LogOut,
+  Sparkles,
+  Palette,
+  Flame,
+  BookOpen,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
@@ -39,6 +43,13 @@ const mainNav: NavItem[] = [
   { label: 'Kanal & Insight', href: '/channels', icon: Share2 },
   { label: 'Rencana Marketing', href: '/plans', icon: Target },
   { label: 'Evaluasi Kinerja', href: '/evaluations', icon: FileSpreadsheet },
+];
+
+const brandingNav: NavItem[] = [
+  { label: 'Marketing Studio', href: '/content/studio', icon: Sparkles, badge: 'Studio' },
+  { label: 'Kampanye Promo', href: '/campaigns', icon: Flame },
+  { label: 'Brand Hub & Aset', href: '/brand-hub', icon: Palette },
+  { label: 'E-Katalog Publik', href: '/katalog', icon: BookOpen },
 ];
 
 const offlineNav: NavItem[] = [
@@ -177,6 +188,7 @@ export function Sidebar() {
         {/* Navigation Groups */}
         <div className="p-3 space-y-5">
           {renderSection('Operasional Utama', mainNav)}
+          {renderSection('Branding & Kreatif', brandingNav)}
           {renderSection('Marketing Lapangan', offlineNav)}
           {renderSection('Sistem & Laporan', systemNav)}
         </div>

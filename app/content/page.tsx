@@ -23,7 +23,9 @@ import {
   Building2,
   Copy,
   Check,
+  Sparkles,
 } from 'lucide-react';
+import { MarketingStudioView } from '@/components/modules/content/marketing-studio-view';
 
 const PILLAR_LABELS: Record<ContentPillar, string> = {
   product_info: 'Info Produk & Tipe',
@@ -60,7 +62,7 @@ export default function ContentCalendarPage() {
     STORAGE_KEYS.CONTENT_ITEMS,
     INITIAL_CONTENT_ITEMS
   );
-  const [viewMode, setViewMode] = useState<'calendar' | 'week' | 'kanban'>('kanban');
+  const [viewMode, setViewMode] = useState<'calendar' | 'week' | 'kanban' | 'studio'>('kanban');
 
   // Filters: PIC strictly limited to Semua PIC, Ferry, and Ziyad
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
@@ -164,14 +166,26 @@ export default function ContentCalendarPage() {
           title="Kalender & Antrian Konten"
           description="Kelola alur produksi Reels, Carousel edukasi KPR, liputan progres lapangan, serta penjadwalan publikasi lintas kanal."
           actions={
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="btn-pill-primary"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Rencanakan Konten</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setViewMode(viewMode === 'studio' ? 'kanban' : 'studio')}
+                className={`btn-pill-secondary flex items-center gap-1.5 ${
+                  viewMode === 'studio' ? 'bg-forest text-paper-white border-forest' : ''
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-forest" />
+                <span>Marketing Studio</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="btn-pill-primary"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Rencanakan Konten</span>
+              </button>
+            </div>
           }
         />
 
@@ -265,6 +279,18 @@ export default function ContentCalendarPage() {
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>Kalender Bulanan</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('studio')}
+              className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                viewMode === 'studio'
+                  ? 'bg-forest text-paper-white shadow-xs'
+                  : 'text-forest hover:bg-forest-surface'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Marketing Studio</span>
+            </button>
           </div>
 
           {/* PIC Filter strictly: Semua PIC, Ferry, Ziyad */}
@@ -334,6 +360,11 @@ export default function ContentCalendarPage() {
             </select>
           </div>
         </div>
+
+        {/* View 0: Marketing Studio */}
+        {viewMode === 'studio' && (
+          <MarketingStudioView onSavedToCalendar={() => setViewMode('kanban')} />
+        )}
 
         {/* View 1: Kanban Board */}
         {viewMode === 'kanban' && (

@@ -21,6 +21,10 @@ import {
   FileText,
   Settings,
   LogOut,
+  Sparkles,
+  Palette,
+  Flame,
+  BookOpen,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { SedayaLogo } from '@/components/shared/sedaya-logo';
@@ -68,6 +72,10 @@ export function MobileNav() {
     { label: 'Proyek & Unit', href: '/projects', icon: Building2 },
     { label: 'Aktivitas Harian', href: '/activities', icon: CalendarCheck },
     { label: 'Kalender Konten', href: '/content', icon: CalendarDays },
+    { label: 'Marketing Studio', href: '/content/studio', icon: Sparkles },
+    { label: 'Kampanye Promo', href: '/campaigns', icon: Flame },
+    { label: 'Brand Hub & Aset', href: '/brand-hub', icon: Palette },
+    { label: 'E-Katalog Publik', href: '/katalog', icon: BookOpen },
     { label: 'Kanal & Insight', href: '/channels', icon: Share2 },
     { label: 'Rencana Marketing', href: '/plans', icon: Target },
     { label: 'Evaluasi Kinerja', href: '/evaluations', icon: FileSpreadsheet },

@@ -218,6 +218,7 @@ export const STORAGE_KEYS = {
   SALES_SUPPORT: 'sedaya_sales_support',
   SOSIALISASI: 'sedaya_sosialisasi',
   MARKETING_PROPS: 'sedaya_marketing_props',
+  CAMPAIGNS: 'sedaya_campaigns',
 } as const;
 
 /**

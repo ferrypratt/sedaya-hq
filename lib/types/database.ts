@@ -350,3 +350,32 @@ export interface ReportRun {
   created_at: string;
   generator?: Profile;
 }
+
+export interface CampaignCreativeAsset {
+  id: string;
+  name: string;
+  asset_type: 'reel_video' | 'carousel' | 'digital_ad' | 'story' | 'spanduk' | 'brosur' | 'wa_broadcast';
+  status: 'pending' | 'in_progress' | 'ready';
+  notes?: string;
+}
+
+export interface Campaign {
+  id: string;
+  title: string;
+  tagline: string;
+  period_start: string;
+  period_end: string;
+  project_id?: string | null;
+  status: 'draft' | 'active' | 'completed' | 'paused';
+  budget_idr: number;
+  target_leads: number;
+  target_bookings: number;
+  actual_leads: number;
+  actual_bookings: number;
+  channels: ChannelPlatform[];
+  key_message: string;
+  creative_assets: CampaignCreativeAsset[];
+  created_at: string;
+  updated_at: string;
+  project?: Project;
+}
