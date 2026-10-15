@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { getClientTodayString, getNextDayString } from '@/lib/utils/date-utils';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_SALES_SUPPORT_REQUESTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
@@ -39,6 +40,13 @@ export default function SalesSupportPage() {
     due_date: '2026-10-15',
     pic_id: INITIAL_PROFILES[1].id,
   });
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      due_date: getNextDayString(getClientTodayString()),
+    }));
+  }, []);
 
   const filteredRequests = requests.filter((r) => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
@@ -112,7 +120,7 @@ export default function SalesSupportPage() {
       project_id: INITIAL_PROJECTS[0].id,
       request_type: 'konten_promo',
       description: '',
-      due_date: '2026-10-15',
+      due_date: getNextDayString(getClientTodayString()),
       pic_id: INITIAL_PROFILES[1].id,
     });
   };

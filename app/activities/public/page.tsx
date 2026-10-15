@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { pdf } from '@react-pdf/renderer';
 import { ActivitiesPdfDocument } from '@/components/modules/activities/activities-pdf-document';
+import {
+  getClientTodayString,
+  getYesterdayString,
+  formatDisplayDateIndonesian,
+} from '@/lib/utils/date-utils';
 import {
   INITIAL_ACTIVITIES,
   INITIAL_PROJECTS,
@@ -77,10 +82,20 @@ export default function PublicActivitiesPage() {
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [selectedDate, setSelectedDate] = useState('2026-10-13');
+  const [todayDate, setTodayDate] = useState('');
+  const [yesterdayDate, setYesterdayDate] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const today = getClientTodayString();
+    const yesterday = getYesterdayString(today);
+    setSelectedDate(today);
+    setTodayDate(today);
+    setYesterdayDate(yesterday);
+  }, []);
 
   const [isExporting, setIsExporting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -149,7 +164,7 @@ export default function PublicActivitiesPage() {
           ? 'Ziyad'
           : 'Semua PIC';
       const dateLabel =
-        viewMode === 'day' ? `Harian (${selectedDate})` : 'Semua Tanggal';
+        viewMode === 'day' ? `Harian (${formatDisplayDateIndonesian(selectedDate)})` : 'Semua Tanggal';
 
       const doc = (
         <ActivitiesPdfDocument
@@ -344,18 +359,35 @@ export default function PublicActivitiesPage() {
             </div>
 
             {/* Date Mode Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1 p-1 bg-warm-cream rounded-full border border-sand-border">
                 <button
                   type="button"
-                  onClick={() => setViewMode('day')}
+                  onClick={() => {
+                    setViewMode('day');
+                    setSelectedDate(todayDate || getClientTodayString());
+                  }}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    viewMode === 'day'
+                    viewMode === 'day' && todayDate && selectedDate === todayDate
                       ? 'bg-paper-white text-ink-black shadow-xs font-bold'
                       : 'text-stone-gray hover:text-ink-black'
                   }`}
                 >
-                  Mode Harian
+                  Hari Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('day');
+                    setSelectedDate(yesterdayDate || getYesterdayString());
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    viewMode === 'day' && yesterdayDate && selectedDate === yesterdayDate
+                      ? 'bg-paper-white text-ink-black shadow-xs font-bold'
+                      : 'text-stone-gray hover:text-ink-black'
+                  }`}
+                >
+                  Kemarin
                 </button>
                 <button
                   type="button"
@@ -371,13 +403,18 @@ export default function PublicActivitiesPage() {
               </div>
 
               {viewMode === 'day' && (
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="input-clay text-xs font-medium py-1.5 px-3"
-                  aria-label="Pilih tanggal aktivitas"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="input-clay text-xs font-medium py-1.5 px-3 metric-mono"
+                    aria-label="Pilih tanggal aktivitas"
+                  />
+                  <span className="hidden md:inline text-xs font-medium text-stone-gray">
+                    {formatDisplayDateIndonesian(selectedDate)}
+                  </span>
+                </div>
               )}
             </div>
           </div>
@@ -451,8 +488,8 @@ export default function PublicActivitiesPage() {
             <span>
               Menampilkan <strong className="text-ink-black">{filteredActivities.length}</strong> aktivitas
             </span>
-            <span className="font-mono text-[11px]">
-              {viewMode === 'day' ? `Tanggal: ${selectedDate}` : 'Rekapitulasi Lengkap'}
+            <span className="text-[11px] font-medium">
+              {viewMode === 'day' ? formatDisplayDateIndonesian(selectedDate) : 'Rekapitulasi Lengkap'}
             </span>
           </div>
 
@@ -462,11 +499,26 @@ export default function PublicActivitiesPage() {
                 <CalendarCheck className="w-6 h-6" />
               </div>
               <h2 className="font-bold text-base text-ink-black">
-                Tidak Ada Aktivitas Ditemukan
+                {viewMode === 'day' && selectedDate
+                  ? `Tidak Ada Aktivitas untuk ${formatDisplayDateIndonesian(selectedDate)}`
+                  : 'Tidak Ada Aktivitas Ditemukan'}
               </h2>
               <p className="text-xs text-stone-gray max-w-md mx-auto leading-relaxed">
-                Tidak ada log pekerjaan yang cocok dengan filter atau kata kunci pencarian yang dipilih. Coba sesuaikan tanggal atau pilihan filter di atas.
+                {viewMode === 'day'
+                  ? 'Belum ada log pekerjaan pada tanggal ini. Anda dapat memeriksa arsip aktivitas kemarin atau mengganti filter di atas.'
+                  : 'Tidak ada log pekerjaan yang cocok dengan filter atau kata kunci pencarian yang dipilih. Coba sesuaikan pilihan filter di atas.'}
               </p>
+              {viewMode === 'day' && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDate(getYesterdayString(selectedDate))}
+                    className="px-4 py-2 min-h-10 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black hover:bg-warm-cream transition-colors"
+                  >
+                    Lihat Aktivitas Kemarin
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { getCurrentWeekRange, getClientTodayString } from '@/lib/utils/date-utils';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_SOSIALISASI_ASSISTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
@@ -39,6 +40,13 @@ export default function SosialisasiPage() {
     pic_id: INITIAL_PROFILES[0].id,
   });
 
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      activity_date: getCurrentWeekRange().end,
+    }));
+  }, []);
+
   const totalActivities = assists.length;
   const totalAttendeesExpected = assists.reduce((sum, a) => sum + a.expected_attendees, 0);
   const totalAttendeesActual = assists.reduce((sum, a) => sum + a.actual_attendees, 0);
@@ -71,7 +79,7 @@ export default function SosialisasiPage() {
     setFormData({
       institution: '',
       location: '',
-      activity_date: '2026-10-18',
+      activity_date: getCurrentWeekRange().end,
       project_id: INITIAL_PROJECTS[1].id,
       expected_attendees: '',
       actual_attendees: '',

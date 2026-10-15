@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { Modal } from '@/components/ui/modal';
+import { getCurrentWeekRange } from '@/lib/utils/date-utils';
 import { Channel, ChannelInsight, ChannelPlatform } from '@/lib/types/database';
 import {
   getPlatformMetrics,
@@ -59,6 +60,15 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
     metric_key: platformMetrics[0]?.key || '',
     value: '',
   });
+
+  useEffect(() => {
+    const { start, end } = getCurrentWeekRange();
+    setFormData((prev) => ({
+      ...prev,
+      period_start: start,
+      period_end: end,
+    }));
+  }, []);
 
   const getPlatformIcon = (platform: ChannelPlatform, className = 'w-5 h-5') => {
     switch (platform) {
@@ -135,8 +145,8 @@ export function ChannelDetailView({ channel }: ChannelDetailViewProps) {
     setIsManualModalOpen(false);
     setFormData({
       period_type: periodType,
-      period_start: '2026-10-12',
-      period_end: '2026-10-18',
+      period_start: getCurrentWeekRange().start,
+      period_end: getCurrentWeekRange().end,
       metric_key: platformMetrics[0]?.key || '',
       value: '',
     });

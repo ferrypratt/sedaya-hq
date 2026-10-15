@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { getCurrentWeekRange } from '@/lib/utils/date-utils';
 import {
   INITIAL_EVALUATIONS,
   INITIAL_CONTENT_ITEMS,
@@ -115,6 +116,15 @@ export default function EvaluationsPage() {
     next_actions: '',
   });
 
+  useEffect(() => {
+    const { start, end } = getCurrentWeekRange();
+    setNewEvalForm((prev) => ({
+      ...prev,
+      period_start: start,
+      period_end: end,
+    }));
+  }, []);
+
   const handleCreateEval = (e: React.FormEvent) => {
     e.preventDefault();
     const newEval: Evaluation & { items: EvaluationItem[] } = {
@@ -134,9 +144,10 @@ export default function EvaluationsPage() {
     };
     setEvaluations([newEval, ...evaluations]);
     setIsModalOpen(false);
+    const weekRange = getCurrentWeekRange();
     setNewEvalForm({
-      period_start: '2026-10-12',
-      period_end: '2026-10-18',
+      period_start: weekRange.start,
+      period_end: weekRange.end,
       summary: '',
       wins: '',
       issues: '',

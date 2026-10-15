@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { Modal } from '@/components/ui/modal';
+import { getClientTodayString } from '@/lib/utils/date-utils';
 import {
   INITIAL_UNIT_SNAPSHOTS,
   INITIAL_KOS_SNAPSHOTS,
@@ -49,6 +50,10 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDate, setNewDate] = useState('2026-10-13');
+
+  useEffect(() => {
+    setNewDate(getClientTodayString());
+  }, []);
 
   const latestHousing = housingSnapshots[0];
   const [formHousing, setFormHousing] = useState({

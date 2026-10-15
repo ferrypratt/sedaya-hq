@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { getClientTodayString, INDONESIAN_MONTHS } from '@/lib/utils/date-utils';
 import { INITIAL_CONTENT_ITEMS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
 import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
@@ -95,6 +96,32 @@ export default function ContentCalendarPage() {
     assets_url: '',
   });
 
+  const [calendarInfo, setCalendarInfo] = useState({
+    year: 2026,
+    monthNum: 10,
+    monthName: 'Oktober',
+    daysInMonth: 31,
+    todayStr: '2026-10-16',
+  });
+
+  useEffect(() => {
+    const today = getClientTodayString();
+    setFormData((prev) => ({ ...prev, publish_date: today }));
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const name = INDONESIAN_MONTHS[m - 1] || 'Bulan Ini';
+    const totalDays = new Date(y, m, 0).getDate();
+    setCalendarInfo({
+      year: y,
+      monthNum: m,
+      monthName: name,
+      daysInMonth: totalDays,
+      todayStr: today,
+    });
+  }, []);
+
   const filteredItems = items.filter((item) => {
     if (picFilter === 'ferry' && !item.pic?.full_name.includes('Ferry')) return false;
     if (picFilter === 'ziyad' && !item.pic?.full_name.includes('Ziyad')) return false;
@@ -141,7 +168,7 @@ export default function ContentCalendarPage() {
       title: '',
       pillar: 'promo',
       format: 'reel',
-      publish_date: '2026-10-15',
+      publish_date: getClientTodayString(),
       publish_time: '12:00',
       project_id: INITIAL_PROJECTS[0].id,
       pic_id: INITIAL_PROFILES[1].id,
@@ -588,7 +615,7 @@ export default function ContentCalendarPage() {
           <section className="card-clay p-5 sm:p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-base font-bold text-ink-black">
-                Oktober 2026
+                {calendarInfo.monthName} {calendarInfo.year}
               </h2>
               <span className="text-xs text-stone-gray font-medium">
                 Kalender Distribusi Konten
@@ -606,19 +633,35 @@ export default function ContentCalendarPage() {
             </div>
 
             <div className="grid grid-cols-7 gap-1.5 text-xs">
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-                const dateStr = `2026-10-${day < 10 ? `0${day}` : day}`;
+              {Array.from({ length: calendarInfo.daysInMonth }, (_, i) => i + 1).map((day) => {
+                const monthPadded = String(calendarInfo.monthNum).padStart(2, '0');
+                const dayPadded = String(day).padStart(2, '0');
+                const dateStr = `${calendarInfo.year}-${monthPadded}-${dayPadded}`;
+                const isToday = dateStr === calendarInfo.todayStr;
                 const dayItems = filteredItems.filter(
                   (i) => i.publish_date === dateStr
                 );
                 return (
                   <div
                     key={day}
-                    className="p-2 rounded-xl border border-sand-border min-h-[76px] flex flex-col justify-between bg-paper-white hover:bg-warm-cream transition-colors"
+                    className={`p-2 rounded-xl border min-h-[76px] flex flex-col justify-between transition-colors ${
+                      isToday
+                        ? 'border-ink-black bg-warm-cream shadow-xs'
+                        : 'border-sand-border bg-paper-white hover:bg-warm-cream'
+                    }`}
                   >
-                    <span className="metric-mono font-bold text-[11px] text-stone-gray text-right block">
-                      {day}
-                    </span>
+                    <div className="flex items-center justify-between">
+                      {isToday && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-ink-black text-paper-white">
+                          Hari Ini
+                        </span>
+                      )}
+                      <span className={`metric-mono font-bold text-[11px] ml-auto block ${
+                        isToday ? 'text-ink-black' : 'text-stone-gray'
+                      }`}>
+                        {day}
+                      </span>
+                    </div>
                     <div className="space-y-1">
                       {dayItems.map((di) => (
                         <div

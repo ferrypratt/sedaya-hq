@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { SedayaLogo } from '@/components/shared/sedaya-logo';
+import {
+  getClientTodayString,
+  getYesterdayString,
+  formatDisplayDateIndonesian,
+} from '@/lib/utils/date-utils';
 import {
   INITIAL_PROJECTS,
   INITIAL_UNIT_SNAPSHOTS,
@@ -108,9 +113,19 @@ export default function UnifiedPublicPortalPage() {
   // Filter states for activities
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
   const [selectedDate, setSelectedDate] = useState('2026-10-13');
+  const [todayDate, setTodayDate] = useState('');
+  const [yesterdayDate, setYesterdayDate] = useState('');
   const [viewMode, setViewMode] = useState<'day' | 'all'>('day');
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    const today = getClientTodayString();
+    const yesterday = getYesterdayString(today);
+    setSelectedDate(today);
+    setTodayDate(today);
+    setYesterdayDate(yesterday);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -253,7 +268,7 @@ export default function UnifiedPublicPortalPage() {
           : 'Semua PIC';
 
       const dateLabel =
-        viewMode === 'day' ? `Harian (${selectedDate})` : 'Semua Tanggal';
+        viewMode === 'day' ? `Harian (${formatDisplayDateIndonesian(selectedDate)})` : 'Semua Tanggal';
 
       const doc = (
         <ActivitiesPdfDocument
@@ -588,13 +603,41 @@ export default function UnifiedPublicPortalPage() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center p-1 bg-warm-cream rounded-full border border-sand-border">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDate(todayDate || getClientTodayString())}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        todayDate && selectedDate === todayDate
+                          ? 'bg-paper-white text-ink-black shadow-xs font-bold'
+                          : 'text-stone-gray hover:text-ink-black'
+                      }`}
+                    >
+                      Hari Ini
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDate(yesterdayDate || getYesterdayString())}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        yesterdayDate && selectedDate === yesterdayDate
+                          ? 'bg-paper-white text-ink-black shadow-xs font-bold'
+                          : 'text-stone-gray hover:text-ink-black'
+                      }`}
+                    >
+                      Kemarin
+                    </button>
+                  </div>
+
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     className="px-3.5 py-1.5 min-h-9 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black metric-mono"
                   />
+                  <span className="hidden md:inline text-xs font-medium text-stone-gray">
+                    {formatDisplayDateIndonesian(selectedDate)}
+                  </span>
                   <button
                     type="button"
                     onClick={handleExportPdf}

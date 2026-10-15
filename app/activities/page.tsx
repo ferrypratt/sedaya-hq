@@ -1,11 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
 import { ActivitiesPdfDocument } from '@/components/modules/activities/activities-pdf-document';
+import {
+  getClientTodayString,
+  getYesterdayString,
+  getNextDayString,
+  formatDisplayDateIndonesian,
+} from '@/lib/utils/date-utils';
 import {
   usePersistentState,
   STORAGE_KEYS,
@@ -105,9 +111,19 @@ export default function ActivitiesPage() {
   const [picFilter, setPicFilter] = useState<'all' | 'ferry' | 'ziyad'>('all');
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
   const [selectedDate, setSelectedDate] = useState('2026-10-13');
+  const [todayDate, setTodayDate] = useState('');
+  const [yesterdayDate, setYesterdayDate] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const today = getClientTodayString();
+    const yesterday = getYesterdayString(today);
+    setSelectedDate(today);
+    setTodayDate(today);
+    setYesterdayDate(yesterday);
+  }, []);
 
   const handleExportPdf = async () => {
     try {
@@ -120,7 +136,7 @@ export default function ActivitiesPage() {
           : 'Semua PIC';
       const dateLabel =
         viewMode === 'day'
-          ? `Harian (${selectedDate})`
+          ? `Harian (${formatDisplayDateIndonesian(selectedDate)})`
           : 'Semua Tanggal';
 
       const doc = (
@@ -182,7 +198,7 @@ export default function ActivitiesPage() {
         : 'Semua PIC';
 
     const dateLabel =
-      viewMode === 'day' ? selectedDate : 'Seluruh Rekap Aktivitas';
+      viewMode === 'day' ? formatDisplayDateIndonesian(selectedDate) : 'Seluruh Rekap Aktivitas';
 
     const totalCount = filteredActivities.length;
     const doneCount = filteredActivities.filter((a) => a.status === 'done').length;
@@ -251,7 +267,7 @@ export default function ActivitiesPage() {
     title: '',
     description: '',
     pic_id: INITIAL_PROFILES[0].id,
-    activity_date: '2026-10-13',
+    activity_date: '',
     category: 'content_production' as ActivityCategory,
     project_id: INITIAL_PROJECTS[0].id,
     status: 'planned' as ActivityStatus,
@@ -338,10 +354,11 @@ export default function ActivitiesPage() {
   });
 
   const handleCarryOver = (activity: DailyActivity) => {
+    const nextDate = getNextDayString(activity.activity_date || selectedDate);
     const carriedActivity: DailyActivity = {
       ...activity,
       id: getNextActivityId(),
-      activity_date: '2026-10-14',
+      activity_date: nextDate,
       status: 'carried_over',
       notes: `${activity.notes || ''} [Dialihkan dari ${activity.activity_date}]`.trim(),
       created_at: new Date().toISOString(),
@@ -525,14 +542,31 @@ export default function ActivitiesPage() {
             <div className="inline-flex items-center p-1 bg-paper-white border border-sand-border rounded-full">
               <button
                 type="button"
-                onClick={() => setViewMode('day')}
-                className={`px-3.5 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
-                  viewMode === 'day'
+                onClick={() => {
+                  setViewMode('day');
+                  setSelectedDate(todayDate || getClientTodayString());
+                }}
+                className={`px-3 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
+                  viewMode === 'day' && todayDate && selectedDate === todayDate
                     ? 'bg-ink-black text-paper-white'
                     : 'text-stone-gray hover:text-ink-black'
                 }`}
               >
-                Harian
+                Hari Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode('day');
+                  setSelectedDate(yesterdayDate || getYesterdayString());
+                }}
+                className={`px-3 py-1.5 min-h-9 rounded-full text-xs font-semibold transition-colors ${
+                  viewMode === 'day' && yesterdayDate && selectedDate === yesterdayDate
+                    ? 'bg-ink-black text-paper-white'
+                    : 'text-stone-gray hover:text-ink-black'
+                }`}
+              >
+                Kemarin
               </button>
               <button
                 type="button"
@@ -548,13 +582,18 @@ export default function ActivitiesPage() {
             </div>
 
             {viewMode === 'day' && (
-              <input
-                type="date"
-                aria-label="Pilih tanggal aktivitas"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3.5 py-2 min-h-10 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black metric-mono"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  aria-label="Pilih tanggal aktivitas"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-3.5 py-2 min-h-9 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black metric-mono shadow-sm"
+                />
+                <span className="hidden md:inline text-xs font-medium text-stone-gray">
+                  {formatDisplayDateIndonesian(selectedDate)}
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -626,20 +665,33 @@ export default function ActivitiesPage() {
               <CalendarCheck className="w-5 h-5" />
             </div>
             <h2 className="font-bold text-base text-ink-black">
-              Belum Ada Aktivitas Tercatat
+              {viewMode === 'day' && selectedDate
+                ? `Belum Ada Aktivitas untuk ${formatDisplayDateIndonesian(selectedDate)}`
+                : 'Belum Ada Aktivitas Tercatat'}
             </h2>
             <p className="text-xs text-stone-gray max-w-md mx-auto leading-relaxed">
-              Mulai catat pekerjaan harian untuk PIC yang dipilih agar rekapitulasi produktivitas dan laporan mingguan terisi secara otomatis.
+              {viewMode === 'day'
+                ? 'Belum ada pekerjaan tercatat untuk tanggal yang dipilih. Mulai catat pekerjaan hari ini atau lihat arsip pekerjaan kemarin.'
+                : 'Mulai catat pekerjaan harian untuk PIC yang dipilih agar rekapitulasi produktivitas dan laporan mingguan terisi secara otomatis.'}
             </p>
-            <div className="pt-1">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsAddOpen(true)}
                 className="btn-pill-primary"
               >
                 <Plus className="w-4 h-4" />
-                <span>Tambah Aktivitas Pertama</span>
+                <span>Tambah Aktivitas</span>
               </button>
+              {viewMode === 'day' && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(getYesterdayString(selectedDate))}
+                  className="px-4 py-2 min-h-10 rounded-full border border-sand-border bg-paper-white text-xs font-semibold text-ink-black hover:bg-warm-cream transition-colors"
+                >
+                  Lihat Aktivitas Kemarin
+                </button>
+              )}
             </div>
           </div>
         ) : (

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
+import { getCurrentWeekRange } from '@/lib/utils/date-utils';
 import {
   INITIAL_PROJECTS,
   INITIAL_UNIT_SNAPSHOTS,
@@ -40,6 +41,29 @@ export default function ReportsPage() {
   const [periodEnd, setPeriodEnd] = useState('2026-10-18');
   const [isGenerating, setIsGenerating] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const { start, end } = getCurrentWeekRange();
+    setPeriodStart(start);
+    setPeriodEnd(end);
+  }, []);
+
+  const handleSetCurrentWeek = () => {
+    setReportType('weekly');
+    const { start, end } = getCurrentWeekRange();
+    setPeriodStart(start);
+    setPeriodEnd(end);
+  };
+
+  const handleSetCurrentMonth = () => {
+    setReportType('monthly');
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+    setPeriodStart(`${y}-${m}-01`);
+    setPeriodEnd(`${y}-${m}-${String(lastDay).padStart(2, '0')}`);
+  };
 
   const [sections, setSections] = useState<ReportSections>({
     executiveSummary: true,
@@ -147,6 +171,24 @@ export default function ReportsPage() {
                   }`}
                 >
                   Bulanan (Monthly)
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <span className="text-[10px] font-bold text-stone-gray uppercase tracking-wider">Pintas:</span>
+                <button
+                  type="button"
+                  onClick={handleSetCurrentWeek}
+                  className="px-2.5 py-1 text-[11px] font-semibold rounded-full border border-sand-border bg-paper-white text-ink-black hover:bg-warm-cream transition-colors"
+                >
+                  Minggu Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSetCurrentMonth}
+                  className="px-2.5 py-1 text-[11px] font-semibold rounded-full border border-sand-border bg-paper-white text-ink-black hover:bg-warm-cream transition-colors"
+                >
+                  Bulan Ini
                 </button>
               </div>
 

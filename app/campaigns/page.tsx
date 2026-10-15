@@ -9,6 +9,7 @@ import { INITIAL_CAMPAIGNS } from '@/lib/data/seed-campaigns';
 import { INITIAL_PROJECTS } from '@/lib/data/seed-data';
 import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
 import { Campaign, CampaignCreativeAsset, ChannelPlatform } from '@/lib/types/database';
+import { getClientTodayString, formatDisplayDateIndonesian } from '@/lib/utils/date-utils';
 import { InstagramIcon, TikTokIcon } from '@/components/shared/icons';
 import {
   Megaphone,
@@ -73,6 +74,18 @@ export default function CampaignsPage() {
     key_message: '',
     channels: ['instagram', 'tiktok', 'website'] as ChannelPlatform[],
   });
+
+  useEffect(() => {
+    const today = getClientTodayString();
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    const endStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    setFormData((prev) => ({
+      ...prev,
+      period_start: today,
+      period_end: endStr,
+    }));
+  }, []);
 
   const filteredCampaigns = campaigns.filter((c) => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;

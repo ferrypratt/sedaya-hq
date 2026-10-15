@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { getCurrentWeekRange, getClientTodayString } from '@/lib/utils/date-utils';
 import { INITIAL_MARKETING_PLANS } from '@/lib/data/seed-plans-content';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
 import { usePersistentState, STORAGE_KEYS, generateUUID } from '@/lib/storage/persistence';
@@ -55,6 +56,19 @@ export default function MarketingPlansPage() {
     due_date: '2026-10-22',
   });
 
+  useEffect(() => {
+    const { start, end } = getCurrentWeekRange();
+    setNewPlanForm((prev) => ({
+      ...prev,
+      period_start: start,
+      period_end: end,
+    }));
+    setNewItemForm((prev) => ({
+      ...prev,
+      due_date: end,
+    }));
+  }, []);
+
   const filteredPlans = plans.filter((p) => {
     if (periodFilter === 'all') return true;
     return p.period_type === periodFilter;
@@ -79,12 +93,13 @@ export default function MarketingPlansPage() {
     setPlans([newPlan, ...plans]);
     setIsNewPlanOpen(false);
     setExpandedPlanId(newPlan.id);
+    const weekRange = getCurrentWeekRange();
     setNewPlanForm({
       title: '',
       objective: '',
       period_type: 'weekly',
-      period_start: '2026-10-19',
-      period_end: '2026-10-25',
+      period_start: weekRange.start,
+      period_end: weekRange.end,
       status: 'draft',
     });
   };
@@ -130,7 +145,7 @@ export default function MarketingPlansPage() {
       scope: 'online',
       target_metric: 'reach',
       target_value: '10000',
-      due_date: '2026-10-22',
+      due_date: getCurrentWeekRange().end,
     });
   };
 

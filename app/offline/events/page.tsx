@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/ui/page-header';
 import { Modal } from '@/components/ui/modal';
+import { getCurrentWeekRange, getClientTodayString } from '@/lib/utils/date-utils';
 import { OfflineNavTabs } from '@/components/modules/offline/offline-nav-tabs';
 import { INITIAL_OFFLINE_EVENTS } from '@/lib/data/seed-offline';
 import { INITIAL_PROJECTS, INITIAL_PROFILES } from '@/lib/data/seed-data';
@@ -42,6 +43,13 @@ export default function OfflineEventsPage() {
     target_visitors: '',
     pic_id: INITIAL_PROFILES[0].id,
   });
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      event_date: getCurrentWeekRange().end,
+    }));
+  }, []);
 
   const filteredEvents = events.filter((ev) => {
     if (typeFilter !== 'all' && ev.event_type !== typeFilter) return false;
@@ -116,7 +124,7 @@ export default function OfflineEventsPage() {
     setFormData({
       title: '',
       event_type: 'weekly',
-      event_date: '2026-10-18',
+      event_date: getCurrentWeekRange().end,
       start_time: '08:00',
       end_time: '12:00',
       location: '',
