@@ -32,7 +32,12 @@
   --color-forest-surface: #eefbf3;
   --color-forest-border: #b6e6c8;
   --color-magenta: #8b045c;
-  --color-blush: #f8b9e3;
+  /* Executive Architectural Bento Palette */
+  --color-obsidian: #141312;
+  --color-terracotta: #c85a32;
+  --color-terracotta-hover: #b54d27;
+  --color-terracotta-surface: #fdf5f0;
+  --color-terracotta-border: #f2cebf;
 
   /* Typography Stacks */
   --font-display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -77,6 +82,11 @@
   --color-forest-border: var(--color-forest-border);
   --color-magenta: var(--color-magenta);
   --color-blush: var(--color-blush);
+  --color-obsidian: var(--color-obsidian);
+  --color-terracotta: var(--color-terracotta);
+  --color-terracotta-hover: var(--color-terracotta-hover);
+  --color-terracotta-surface: var(--color-terracotta-surface);
+  --color-terracotta-border: var(--color-terracotta-border);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
@@ -207,14 +217,14 @@ p {
   cursor: not-allowed;
 }
 
-/* Tactile Clay Surfaces (Zero Drop-Shadow per R-29 & design.md) */
+/* Tactile Clay & Bento Surfaces */
 .card-clay {
   background-color: var(--color-paper-white);
   border: 1px solid var(--color-sand-border);
   border-radius: 16px;
   padding: 1.25rem;
-  box-shadow: none;
-  transition-property: border-color, background-color;
+  box-shadow: 0 1px 3px rgba(20, 19, 18, 0.02);
+  transition-property: border-color, background-color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: var(--ease-out-quart);
 }
@@ -225,6 +235,82 @@ p {
   border-radius: 16px;
   padding: 1.25rem;
   box-shadow: none;
+}
+
+/* Executive Architectural Bento Cards */
+.bento-card {
+  background-color: var(--color-paper-white);
+  border: 1px solid var(--color-sand-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(20, 19, 18, 0.03), 0 6px 16px -4px rgba(20, 19, 18, 0.04);
+  transition: border-color 180ms var(--ease-out-quart), box-shadow 180ms var(--ease-out-quart);
+}
+
+.bento-card:hover {
+  border-color: var(--color-sand-hover);
+  box-shadow: 0 4px 20px -2px rgba(20, 19, 18, 0.08);
+}
+
+.bento-card-dark {
+  background-color: var(--color-obsidian);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 1.5rem;
+  color: #ffffff;
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.28);
+}
+
+.bento-card-subtle {
+  background-color: var(--color-warm-cream);
+  border: 1px solid var(--color-sand-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  transition: border-color 180ms var(--ease-out-quart);
+}
+
+.bento-card-subtle:hover {
+  border-color: var(--color-sand-hover);
+}
+
+/* Terracotta Accent Pill */
+.btn-pill-terracotta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  border-radius: 9999px;
+  background-color: var(--color-terracotta);
+  color: #ffffff;
+  padding: 0.5rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid var(--color-terracotta);
+  transition-property: transform, background-color, border-color, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-out-quart);
+}
+
+.btn-pill-terracotta:hover:not(:disabled) {
+  background-color: var(--color-terracotta-hover);
+  border-color: var(--color-terracotta-hover);
+}
+
+.btn-pill-terracotta:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-pill-terracotta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.workbench-blur {
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Standard Input Primitives */

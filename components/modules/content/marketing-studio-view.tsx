@@ -395,7 +395,7 @@ export function MarketingStudioView({
   return (
     <div className="space-y-6">
       {/* Studio Mode Selector & Controls */}
-      <div className="card-clay p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bento-card p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-forest-surface border border-forest-border flex items-center justify-center text-forest shrink-0 shadow-xs">
             <Sparkles className="w-5 h-5" />
@@ -516,10 +516,10 @@ export function MarketingStudioView({
       {/* MODE 1: REELS SCRIPT GENERATOR */}
       {activeMode === 'reels' && (
         <div className="space-y-4">
-          <div className="card-clay p-5 space-y-4">
+          <div className="bento-card p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-sand-border">
               <div>
-                <span className="text-[11px] font-bold text-forest uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-terracotta uppercase tracking-wider block">
                   Naskah Produksi Konten Video
                 </span>
                 <h3 className="text-base font-bold text-ink-black mt-0.5">
@@ -557,7 +557,7 @@ export function MarketingStudioView({
                 <button
                   type="button"
                   onClick={handleSaveToCalendar}
-                  className="btn-pill-primary text-xs py-1.5 px-3 bg-forest text-paper-white hover:bg-forest-emerald"
+                  className="btn-pill-terracotta text-xs py-1.5 px-3 shadow-2xs"
                 >
                   <CalendarPlus className="w-3.5 h-3.5" />
                   <span>Jadwalkan ke Kalender Konten</span>

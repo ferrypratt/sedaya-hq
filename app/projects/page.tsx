@@ -143,7 +143,7 @@ export default function ProjectsPage() {
               <button
                 type="button"
                 onClick={() => handleOpenSaleModal()}
-                className="btn-pill-primary text-xs py-2 px-3.5 inline-flex items-center gap-1.5"
+                className="btn-pill-terracotta text-xs py-2 px-3.5 inline-flex items-center gap-1.5 shadow-2xs"
                 title="Catat perubahan status unit (booking, SP3K, akad, cash) secara cepat"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -298,7 +298,7 @@ export default function ProjectsPage() {
 
                 <Link
                   href={`/projects/${project.slug}`}
-                  className="btn-pill-primary min-h-11 px-5 shrink-0"
+                  className="btn-pill-terracotta min-h-11 px-5 shrink-0 shadow-2xs"
                 >
                   <span>Buka & Rekonsiliasi</span>
                   <ArrowRight className="w-4 h-4" />
@@ -320,7 +320,7 @@ export default function ProjectsPage() {
               return (
                 <article
                   key={project.id}
-                  className="card-clay p-5 flex flex-col justify-between hover:border-ink-black"
+                  className="bento-card p-5 flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     {/* Data Point 1: Identity & Location */}

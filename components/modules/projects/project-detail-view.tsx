@@ -191,7 +191,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="btn-pill-primary self-start sm:self-auto"
+                className="btn-pill-terracotta self-start sm:self-auto shadow-2xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Catat Snapshot Inventaris</span>
@@ -217,7 +217,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="btn-pill-primary shrink-0 self-start sm:self-center"
+              className="btn-pill-terracotta shrink-0 self-start sm:self-center shadow-2xs"
             >
               <span>Sesuaikan Snapshot</span>
             </button>
@@ -228,7 +228,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
         {isHousing && latestHousing && (
           <div className="space-y-6">
             {/* Unified Tactile Inventory Ledger Strip */}
-            <section className="card-cream p-5">
+            <section className="bento-card p-6">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-sand-border">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ash-gray block">
@@ -316,7 +316,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
 
             {/* Two-Column Split: Visual Chart & Snapshot Ledger */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-5 card-clay p-5 flex flex-col justify-between">
+              <div className="lg:col-span-5 bento-card p-6 flex flex-col justify-between">
                 <div className="mb-4">
                   <h2 className="font-bold text-base text-ink-black">
                     Proporsi Tahapan Funnel
@@ -360,7 +360,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
                 </div>
               </div>
 
-              <div className="lg:col-span-7 card-clay p-0 overflow-hidden flex flex-col">
+              <div className="lg:col-span-7 bento-card p-0 overflow-hidden flex flex-col">
                 <div className="px-5 py-4 bg-warm-cream border-b border-sand-border flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <History className="w-4 h-4 text-ink-black" />

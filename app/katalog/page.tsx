@@ -264,7 +264,7 @@ export default function PublicCatalogPage() {
             </Link>
             <Link
               href="/login"
-              className="btn-pill-primary text-xs py-2 px-3 bg-forest text-paper-white hover:bg-forest-emerald"
+              className="btn-pill-terracotta text-xs py-2 px-3 shadow-2xs"
             >
               <span>Login Admin</span>
             </Link>
@@ -314,7 +314,7 @@ export default function PublicCatalogPage() {
           {filteredProjects.map((proj) => (
             <div
               key={proj.id}
-              className="card-clay overflow-hidden flex flex-col justify-between border-sand-border hover:border-forest/50 transition-all group"
+              className="bento-card overflow-hidden flex flex-col justify-between transition-all group"
             >
               {/* Card Header & Visual Badge */}
               <div className="p-5 sm:p-6 space-y-4">
@@ -440,7 +440,7 @@ export default function PublicCatalogPage() {
                     href={getWhatsAppLink(proj)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-pill-primary text-xs py-2.5 px-3 flex items-center justify-center gap-1.5 bg-forest text-paper-white hover:bg-forest-emerald shadow-xs"
+                    className="btn-pill-terracotta text-xs py-2.5 px-3 flex items-center justify-center gap-1.5 shadow-2xs"
                   >
                     <Phone className="w-3.5 h-3.5" />
                     <span>Tanya via WhatsApp</span>

@@ -479,7 +479,7 @@ export default function ActivitiesPage() {
               <button
                 type="button"
                 onClick={() => setIsAddOpen(true)}
-                className="btn-pill-primary text-xs py-2 px-3.5"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-terracotta text-paper-white hover:bg-terracotta-hover active:scale-[0.97] transition-all shadow-2xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Catat Aktivitas</span>
@@ -678,7 +678,7 @@ export default function ActivitiesPage() {
               <button
                 type="button"
                 onClick={() => setIsAddOpen(true)}
-                className="btn-pill-primary"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-terracotta text-paper-white hover:bg-terracotta-hover active:scale-[0.97] transition-all shadow-2xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Tambah Aktivitas</span>
@@ -701,7 +701,7 @@ export default function ActivitiesPage() {
               return (
                 <article
                   key={act.id}
-                  className="card-clay p-5 hover:border-ink-black space-y-3"
+                  className="bento-card p-5 space-y-3"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">

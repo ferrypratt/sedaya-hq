@@ -61,20 +61,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop Contextual Top Workbench Bar */}
-        <header className="hidden md:flex items-center justify-between h-13 px-6 lg:px-8 border-b border-sand-border bg-paper-white sticky top-0 z-30">
-          <div className="flex items-center gap-2 text-xs min-w-0">
-            <span className="font-semibold text-ash-gray uppercase tracking-[0.05em] truncate">
+        <header className="hidden md:flex items-center justify-between h-13 px-6 lg:px-8 border-b border-sand-border workbench-blur sticky top-0 z-30">
+          <div className="flex items-center gap-2.5 text-xs min-w-0">
+            <span className="font-semibold text-ash-gray uppercase tracking-[0.06em] truncate">
               {routeMeta.group}
             </span>
-            <span aria-hidden="true" className="text-sand-border">
+            <span aria-hidden="true" className="text-sand-border text-sm">
               /
             </span>
-            <span className="font-semibold text-ink-black truncate">
-              {routeMeta.label}
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-terracotta shrink-0" />
+              <span className="font-bold text-ink-black truncate">
+                {routeMeta.label}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warm-cream border border-sand-border text-[11px] text-stone-gray font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-forest animate-pulse" />
+              <span>Medan • Deli Serdang</span>
+            </div>
             <button
               type="button"
               onClick={openCommandPalette}
@@ -88,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </kbd>
             </button>
             <SyncStatusIndicator />
-            <span className="metric-mono text-xs text-stone-gray px-2.5 py-1 rounded-md bg-warm-cream border border-sand-border">
+            <span className="metric-mono text-xs text-stone-gray px-2.5 py-1 rounded-full bg-warm-cream border border-sand-border">
               {todayFormatted}
             </span>
             <Link
@@ -100,14 +107,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <Link
               href="/import"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-ink-black bg-paper-white border border-sand-border hover:bg-warm-cream hover:border-sand-hover transition-colors"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-ink-black bg-paper-white border border-sand-border hover:bg-warm-cream hover:border-sand-hover transition-colors"
             >
               <UploadCloud className="w-3.5 h-3.5 text-stone-gray" />
               <span>Import CSV</span>
             </Link>
             <Link
               href="/activities"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-ink-black text-paper-white hover:bg-slate-gray active:scale-[0.97] transition-[transform,background-color]"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-terracotta text-paper-white hover:bg-terracotta-hover active:scale-[0.97] transition-all shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Catat Aktivitas</span>

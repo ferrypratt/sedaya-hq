@@ -215,7 +215,7 @@ export default function CampaignsPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="btn-pill-primary text-xs py-2 px-3.5 flex items-center gap-1.5 bg-forest text-paper-white hover:bg-forest-emerald shadow-xs"
+                className="btn-pill-terracotta text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-2xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Buat Kampanye Baru</span>
@@ -225,7 +225,7 @@ export default function CampaignsPage() {
         />
 
         {/* Executive KPI Bar */}
-        <section className="card-cream p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="bento-card p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <span className="text-[11px] font-semibold uppercase tracking-wider text-ash-gray block">
               Kampanye Aktif
@@ -339,7 +339,7 @@ export default function CampaignsPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="btn-pill-primary text-xs py-2 px-4 bg-forest text-paper-white hover:bg-forest-emerald inline-flex items-center gap-2"
+                className="btn-pill-terracotta text-xs py-2 px-4 inline-flex items-center gap-2 shadow-2xs"
               >
                 <Plus className="w-4 h-4" />
                 <span>Buat Kampanye Pertama</span>
@@ -358,7 +358,7 @@ export default function CampaignsPage() {
             return (
               <div
                 key={camp.id}
-                className="card-clay p-5 sm:p-6 space-y-5 border-sand-border hover:border-forest/40 transition-all"
+                className="bento-card p-5 sm:p-6 space-y-5 transition-all"
               >
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
